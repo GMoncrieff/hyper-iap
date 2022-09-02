@@ -7,7 +7,7 @@ from torchvision import transforms
 
 from hyperiap.models.mlp import MLP
 from hyperiap.models.baseclassifier import BaseClassifier
-
+from hyperiap.datasets.mnist import MNISTDataModule
 
 def cli_main():
     pl.seed_everything(1234)
@@ -25,13 +25,7 @@ def cli_main():
     # ------------
     # data
     # ------------
-    dataset = MNIST("hyperiap/datasets", train=True, download=True, transform=transforms.ToTensor())
-    mnist_test = MNIST("hyperiap/datasets", train=False, download=True, transform=transforms.ToTensor())
-    mnist_train, mnist_val = random_split(dataset, [55000, 5000])
-
-    train_loader = DataLoader(mnist_train, batch_size=args.batch_size)
-    val_loader = DataLoader(mnist_val, batch_size=args.batch_size)
-    test_loader = DataLoader(mnist_test, batch_size=args.batch_size)
+    mnist = MNISTDataModule('')
 
     # ------------
     # model
