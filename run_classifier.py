@@ -9,6 +9,7 @@ from hyperiap.models.mlp import MLP
 from hyperiap.models.baseclassifier import BaseClassifier
 from hyperiap.datasets.mnist import MNISTDataModule
 
+
 def cli_main():
     pl.seed_everything(1234)
 
@@ -25,7 +26,7 @@ def cli_main():
     # ------------
     # data
     # ------------
-    mnist = MNISTDataModule('')
+    mnist = MNISTDataModule("")
 
     # ------------
     # model
@@ -36,12 +37,12 @@ def cli_main():
     # training
     # ------------
     trainer = pl.Trainer.from_argparse_args(args)
-    trainer.fit(model, train_loader, val_loader)
+    trainer.fit(model, datamodule=mnist)
 
     # ------------
     # testing
     # ------------
-    result = trainer.test(test_dataloaders=test_loader)
+    result = trainer.test(datamodule=mnist)
     print(result)
 
 
