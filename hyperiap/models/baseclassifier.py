@@ -14,7 +14,7 @@ class BaseClassifier(pl.LightningModule):
         self.backbone = backbone
         
         self.train_acc = Accuracy()
-        self.val_acc = Accuracy()
+        self.valid_acc = Accuracy()
         self.test_acc = Accuracy()
 
     def forward(self, x):
