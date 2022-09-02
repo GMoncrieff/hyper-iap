@@ -2,12 +2,15 @@ from argparse import ArgumentParser
 
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, random_split
-from torchvision.datasets.mnist import MNIST
+#from torchvision.datasets.mnist import MNIST
 from torchvision import transforms
 
-from hyperiap.models.mlp import MLP
+#from hyperiap.models.mlp import MLP
+from hyperiap.models.cnn1d import TempCNN
 from hyperiap.models.baseclassifier import BaseClassifier
-from hyperiap.datasets.mnist import MNISTDataModule
+#from hyperiap.datasets.mnist import MNISTDataModule
+from hyperiap.datasets.timeseries import TimeseriesDataset
+from hyperiap.datasets.timeseries_module import TimeSeriesDataModule
 
 
 def cli_main():
@@ -26,23 +29,27 @@ def cli_main():
     # ------------
     # data
     # ------------
-    mnist = MNISTDataModule("")
+    #mnist = MNISTDataModule("")
+    ts = TimeSeriesDataModule()
 
     # ------------
     # model
     # ------------
-    model = BaseClassifier(MLP(hidden_dim=args.hidden_dim), args.learning_rate)
+    #model = BaseClassifier(MLP(hidden_dim=args.hidden_dim), args.learning_rate)
+    model = BaseClassifier(TempCNN(args.learning_rate))
 
     # ------------
     # training
     # ------------
     trainer = pl.Trainer.from_argparse_args(args)
-    trainer.fit(model, datamodule=mnist)
-
+    #trainer.fit(model, datamodule=mnist)
+    trainer.fit(model, datamodule=ts)
+    
     # ------------
     # testing
     # ------------
-    result = trainer.test(datamodule=mnist)
+    #result = trainer.test(datamodule=mnist)
+    result = trainer.test(datamodule=ts)
     print(result)
 
 
