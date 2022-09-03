@@ -1,8 +1,10 @@
 import torch
+import torch.nn as nn
+import torch.utils.data
 
 
 class TempCNN(torch.nn.Module):
-    def __init__(self, sequencelength = 500, input_dim=1, num_classes=2, kernel_size=5, hidden_dims=128, dropout=0.2):
+    def __init__(self, input_dim=1, num_classes=2, sequencelength=500, kernel_size=5, hidden_dims=24, dropout=0.2):
         super(TempCNN, self).__init__()
 
         self.hidden_dims = hidden_dims
@@ -20,6 +22,7 @@ class TempCNN(torch.nn.Module):
     def forward(self, x):
         # require NxTxD
         x = x.transpose(1, 2)
+        #x = x.permute(0, 2, 1)
         x = self.conv_bn_relu1(x)
         x = self.conv_bn_relu2(x)
         x = self.conv_bn_relu3(x)
@@ -29,7 +32,7 @@ class TempCNN(torch.nn.Module):
 
 
 class Conv1D_BatchNorm_Relu_Dropout(torch.nn.Module):
-    def __init__(self, input_dim, hidden_dims, kernel_size=5, drop_probability=0.2):
+    def __init__(self, input_dim, hidden_dims, kernel_size=5, drop_probability=0.5):
         super(Conv1D_BatchNorm_Relu_Dropout, self).__init__()
 
         self.block = nn.Sequential(
@@ -44,7 +47,7 @@ class Conv1D_BatchNorm_Relu_Dropout(torch.nn.Module):
 
 
 class FC_BatchNorm_Relu_Dropout(torch.nn.Module):
-    def __init__(self, input_dim, hidden_dims, drop_probability=0.2):
+    def __init__(self, input_dim, hidden_dims, drop_probability=0.5):
         super(FC_BatchNorm_Relu_Dropout, self).__init__()
 
         self.block = nn.Sequential(
@@ -61,3 +64,23 @@ class FC_BatchNorm_Relu_Dropout(torch.nn.Module):
 class Flatten(nn.Module):
     def forward(self, input):
         return input.view(input.size(0), -1)
+
+class simpleCNN(torch.nn.Module):
+    def __init__(self, input_dim=1, num_classes=2, sequencelength=500, kernel_size=5, hidden_dim=24, dropout=0.2):
+        super().__init__()
+
+        self.conv1 = torch.nn.Conv1d(input_dim, hidden_dim, kernel_size, padding=(kernel_size // 2))
+        self.conv2 = torch.nn.Conv1d(hidden_dim, hidden_dim, kernel_size, padding=(kernel_size // 2))
+        self.flatten = Flatten()
+        self.l1 = torch.nn.Linear(sequencelength * hidden_dim, hidden_dim)
+        self.out = torch.nn.Linear(hidden_dim, num_classes)
+
+    def forward(self, x):
+        # require NxTxD
+        #x = x.transpose(1, 2)
+        x = x.permute(0, 2, 1)
+        x = torch.relu(self.conv1(x))
+        x = torch.relu(self.conv2(x))
+        x = self.flatten(x)
+        x = torch.relu(self.l1(x))
+        return self.out(x)
