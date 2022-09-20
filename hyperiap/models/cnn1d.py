@@ -4,7 +4,7 @@ import torch.utils.data
 
 
 class TempCNN(torch.nn.Module):
-    def __init__(self, input_dim=1, num_classes=2, sequencelength=500, kernel_size=5, hidden_dims=24, dropout=0.2):
+    def __init__(self, input_dim=27, num_classes=2, sequencelength=500, kernel_size=5, hidden_dims=24, dropout=0.2):
         super(TempCNN, self).__init__()
 
         self.hidden_dims = hidden_dims
@@ -21,8 +21,8 @@ class TempCNN(torch.nn.Module):
 
     def forward(self, x):
         # require NxTxD
-        x = x.transpose(1, 2)
-        #x = x.permute(0, 2, 1)
+        #x = x.transpose(0,2, 1)
+        x = x.permute(0, 2, 1)
         x = self.conv_bn_relu1(x)
         x = self.conv_bn_relu2(x)
         x = self.conv_bn_relu3(x)
@@ -77,7 +77,6 @@ class simpleCNN(torch.nn.Module):
 
     def forward(self, x):
         # require NxTxD
-        #x = x.transpose(1, 2)
         x = x.permute(0, 2, 1)
         x = torch.relu(self.conv1(x))
         x = torch.relu(self.conv2(x))
