@@ -107,7 +107,7 @@ class Transformer(nn.Module):
 
         return x
 
-class ViT(nn.Module):
+class VIT(nn.Module):
     def __init__(self, image_size, near_band, num_patches, num_classes, dim, depth, heads, mlp_dim, pool='cls', channels=1, dim_head = 16, dropout=0., emb_dropout=0., mode='ViT'):
         super().__init__()
 

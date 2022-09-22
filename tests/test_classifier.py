@@ -1,6 +1,6 @@
 from pytorch_lightning import Trainer, seed_everything
-from hyperiap.models.cnn1d import TempCNN
-from hyperiap.models.vit import ViT
+from hyperiap.models.tempcnn import TEMPCNN
+from hyperiap.models.vit import VIT
 from hyperiap.models.baseclassifier import BaseClassifier
 from hyperiap.datasets.timeseries_module import TimeSeriesDataModule
 
@@ -10,9 +10,9 @@ def test_ts_classifier():
 
     ts = TimeSeriesDataModule()
     
-    #model = BaseClassifier(TempCNN())
+    model = BaseClassifier(TEMPCNN())
     
-    vitmodel = ViT(
+    """ vitmodel = VIT(
     image_size = 3,
     near_band = 3,
     num_patches = 500,
@@ -25,9 +25,9 @@ def test_ts_classifier():
     emb_dropout = 0.1,
     mode = 'CAF'
     )
-    model = BaseClassifier(vitmodel)
+    model = BaseClassifier(vitmodel) """
     
-    trainer = Trainer(limit_train_batches=10, limit_val_batches=0, max_epochs=1)
+    trainer = Trainer(limit_train_batches=50, limit_val_batches=0, max_epochs=2)
     trainer.fit(model, datamodule=ts)
 
     results = trainer.test(datamodule=ts)

@@ -4,14 +4,33 @@ import pytorch_lightning as pl
 from torch.nn import functional as F
 from torchmetrics import Accuracy
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 
+OPTIMIZER = "Adam"
+LR = 1e-3
+LOSS = "cross_entropy"
+ONE_CYCLE_TOTAL_STEPS = 100
 
 class BaseClassifier(pl.LightningModule):
-    def __init__(self, backbone, learning_rate=1e-3):
+    def __init__(self, model, args: Namespace = None):
         super().__init__()
-        self.save_hyperparameters()
-        self.backbone = backbone
+        self.model = model
+        self.args = vars(args) if args is not None else {}
+
+        self.data_config = self.model.data_config
+        self.input_dims = self.data_config["input_dims"]
+
+        optimizer = self.args.get("optimizer", OPTIMIZER)
+        self.optimizer_class = getattr(torch.optim, optimizer)
+
+        self.lr = self.args.get("lr", LR)
+
+        loss = self.args.get("loss", LOSS)
+        if loss not in ("transformer",):
+            self.loss_fn = getattr(torch.nn.functional, loss)
+
+        self.one_cycle_max_lr = self.args.get("one_cycle_max_lr", None)
+        self.one_cycle_total_steps = self.args.get("one_cycle_total_steps", ONE_CYCLE_TOTAL_STEPS)
         
         self.train_acc = Accuracy()
         self.valid_acc = Accuracy()
@@ -19,40 +38,62 @@ class BaseClassifier(pl.LightningModule):
 
     def forward(self, x):
         # use forward for inference/predictions
-        embedding = self.backbone(x)
+        embedding = self.model(x)
         return embedding
+    
+    def predict(self, x):
+        logits = self.model(x)
+        return torch.argmax(logits, dim=1)
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        y_hat = self.backbone(x)
-        loss = F.cross_entropy(y_hat, y)
-        self.train_acc(y_hat, y)
-        self.log("train_loss", loss, on_epoch=True)
-        self.log("train_acc", self.train_acc, on_step=False, on_epoch=True)
-        return loss
+        logits = self(x)
+        loss = self.loss_fn(logits, y)
+        self.train_acc(logits, y)
+
+        self.log("train/loss", loss)
+        self.log("train/acc", self.train_acc, on_step=False, on_epoch=True)
+
+        outputs = {"loss": loss}
+        
+        return outputs
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        y_hat = self.backbone(x)
-        loss = F.cross_entropy(y_hat, y)
-        self.valid_acc(y_hat, y)
-        self.log("valid_loss", loss, on_step=True)
-        self.log("valid_acc", self.valid_acc, on_step=False, on_epoch=True)
+        logits = self(x)
+        loss = self.loss_fn(logits, y)
+        self.val_acc(logits, y)
+
+        self.log("validation/loss", loss, prog_bar=True, sync_dist=True)
+        self.log("validation/acc", self.val_acc, on_step=False, on_epoch=True, prog_bar=True)
+
+        outputs = {"loss": loss}
+        
+        return outputs
 
     def test_step(self, batch, batch_idx):
         x, y = batch
-        y_hat = self.backbone(x)
-        loss = F.cross_entropy(y_hat, y)
-        self.test_acc(y_hat, y)
-        self.log("test_loss", loss)
-        self.log("test_acc", self.test_acc, on_step=False, on_epoch=True)
+        logits = self(x)
+        loss = self.loss_fn(logits, y)
+        self.test_acc(logits, y)
+
+        self.log("test/loss", loss, on_step=False, on_epoch=True)
+        self.log("test/acc", self.test_acc, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
-        # self.hparams available because we called self.save_hyperparameters()
-        return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
+        optimizer = self.optimizer_class(self.parameters(), lr=self.lr)
+        if self.one_cycle_max_lr is None:
+            return optimizer
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            optimizer=optimizer, max_lr=self.one_cycle_max_lr, total_steps=self.one_cycle_total_steps
+        )
+        return {"optimizer": optimizer, "lr_scheduler": scheduler, "monitor": "validation/loss"}
 
     @staticmethod
-    def add_model_specific_args(parent_parser):
-        parser = ArgumentParser(parents=[parent_parser], add_help=False)
-        parser.add_argument("--learning_rate", type=float, default=0.0001)
+    def add_to_argparse(parser):
+        parser.add_argument("--optimizer", type=str, default=OPTIMIZER, help="optimizer class from torch.optim")
+        parser.add_argument("--lr", type=float, default=LR)
+        parser.add_argument("--one_cycle_max_lr", type=float, default=None)
+        parser.add_argument("--one_cycle_total_steps", type=int, default=ONE_CYCLE_TOTAL_STEPS)
+        parser.add_argument("--loss", type=str, default=LOSS, help="loss function from torch.nn.functional")
         return parser
