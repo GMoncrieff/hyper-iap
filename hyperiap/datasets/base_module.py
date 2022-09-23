@@ -1,21 +1,24 @@
-"""Base DataModule class."""
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 import os
-from pathlib import Path
-from typing import Collection, Dict, Optional, Tuple, Union
+from typing import Optional
 
 import pytorch_lightning as pl
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
+
+from hyperiap.datasets.base_dataset import BaseDataset
 
 BATCH_SIZE = 128
 NUM_AVAIL_CPUS = len(os.sched_getaffinity(0))
 NUM_AVAIL_GPUS = torch.cuda.device_count()
+TRANSFORM = None
 
 # sensible multiprocessing defaults: at most one worker per CPU
 DEFAULT_NUM_WORKERS = NUM_AVAIL_CPUS
 # but in distributed data parallel mode, we launch a training on each GPU, so must divide out to keep total at one worker per CPU
-DEFAULT_NUM_WORKERS = NUM_AVAIL_CPUS // NUM_AVAIL_GPUS if NUM_AVAIL_GPUS else DEFAULT_NUM_WORKERS
+DEFAULT_NUM_WORKERS = (
+    NUM_AVAIL_CPUS // NUM_AVAIL_GPUS if NUM_AVAIL_GPUS else DEFAULT_NUM_WORKERS
+)
 
 
 class BaseDataModule(pl.LightningDataModule):
@@ -28,6 +31,7 @@ class BaseDataModule(pl.LightningDataModule):
         self.args = vars(args) if args is not None else {}
         self.batch_size = self.args.get("batch_size", BATCH_SIZE)
         self.num_workers = self.args.get("num_workers", DEFAULT_NUM_WORKERS)
+        self.transform = self.args.get("transform", TRANSFORM)
 
         self.on_gpu = isinstance(self.args.get("gpus", None), (str, int))
 
@@ -35,10 +39,9 @@ class BaseDataModule(pl.LightningDataModule):
         self.num_classes: int
         self.num_bands: int
         self.num_dim: int
-        self.data_train: Dataset
-        self.data_val: Dataset
-        self.data_test: Dataset
-
+        self.data_train: BaseDataset
+        self.data_val: BaseDataset
+        self.data_test: BaseDataset 
 
     @staticmethod
     def add_to_argparse(parser):
@@ -54,11 +57,21 @@ class BaseDataModule(pl.LightningDataModule):
             default=DEFAULT_NUM_WORKERS,
             help=f"Number of additional processes to load data. Default is {DEFAULT_NUM_WORKERS}.",
         )
+        parser.add_argument(
+            "--transform",
+            type=str,
+            default=TRANSFORM,
+            help=f"Transforms to apply to data. Default is {TRANSFORM}.",
+        )
         return parser
 
     def config(self):
         """Return important settings of the dataset, which will be passed to instantiate models."""
-        return {"num_classes": self.num_classes, "num_bands": self.num_bands, "num_dim": self.num_dim}
+        return {
+            "num_classes": self.num_classes,
+            "num_bands": self.num_bands,
+            "num_dim": self.num_dim,
+        }
 
     def prepare_data(self, *args, **kwargs) -> None:
         """Take the first steps to prepare data for use.

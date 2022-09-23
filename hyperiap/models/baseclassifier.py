@@ -18,7 +18,6 @@ class BaseClassifier(pl.LightningModule):
         self.args = vars(args) if args is not None else {}
 
         self.data_config = self.model.data_config
-        self.input_dims = self.data_config["input_dims"]
 
         optimizer = self.args.get("optimizer", OPTIMIZER)
         self.optimizer_class = getattr(torch.optim, optimizer)

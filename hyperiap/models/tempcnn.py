@@ -1,3 +1,4 @@
+from argparse import Namespace
 from typing import Any, Dict
 import torch
 import torch.nn as nn
@@ -14,12 +15,11 @@ class TEMPCNN(torch.nn.Module):
     def __init__(
         self,
         data_config: Dict[str, Any],
-        args: argparse.Namespace = None,
+        args: Namespace = None,
     ) -> None:
         super(TEMPCNN, self).__init__()
         self.args = vars(args) if args is not None else {}
         self.data_config = data_config
-        
         #model params
         self.kernel_size = self.args.get("kernel_size", KERNEL_SIZE)
         self.hidden = self.args.get("hidden_dim", HIDDEN)
