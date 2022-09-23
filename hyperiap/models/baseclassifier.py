@@ -32,7 +32,7 @@ class BaseClassifier(pl.LightningModule):
         self.one_cycle_total_steps = self.args.get("one_cycle_total_steps", ONE_CYCLE_TOTAL_STEPS)
         
         self.train_acc = Accuracy()
-        self.valid_acc = Accuracy()
+        self.val_acc = Accuracy()
         self.test_acc = Accuracy()
 
     def forward(self, x):
@@ -63,8 +63,8 @@ class BaseClassifier(pl.LightningModule):
         loss = self.loss_fn(logits, y)
         self.val_acc(logits, y)
 
-        self.log("validation/loss", loss, prog_bar=True, sync_dist=True)
-        self.log("validation/acc", self.val_acc, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/loss", loss, prog_bar=True, sync_dist=True)
+        self.log("val/acc", self.val_acc, on_step=False, on_epoch=True, prog_bar=True)
 
         outputs = {"loss": loss}
         
@@ -86,7 +86,7 @@ class BaseClassifier(pl.LightningModule):
         scheduler = torch.optim.lr_scheduler.OneCycleLR(
             optimizer=optimizer, max_lr=self.one_cycle_max_lr, total_steps=self.one_cycle_total_steps
         )
-        return {"optimizer": optimizer, "lr_scheduler": scheduler, "monitor": "validation/loss"}
+        return {"optimizer": optimizer, "lr_scheduler": scheduler, "monitor": "val/loss"}
 
     @staticmethod
     def add_to_argparse(parser):
