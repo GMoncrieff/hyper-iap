@@ -4,7 +4,7 @@
 <div align="center">    
  
 # Detection of invasive alien plants using hyperspectral imagery    
-![tests workflow](https://github.com/github/docs/actions/workflows/ci-testing.yml/badge.svg) 
+[![build](https://github.com/GMoncrieff/hyper-iap/actions/workflows/ci-testing.yml/badge.svg)](https://github.com/GMoncrieff/hyper-iap/actions/workflows/ci-testing.yml)
 </div>
  
 ## Description   
