@@ -39,6 +39,7 @@ jobs:
     - name: Generate Report
       run: |
         coverage run -m pytest
+        pwd
         coverage xml -i -o test-results-${{ runner.os }}-${{ matrix.python-version }}.xml
 
     - name: Upload Coverage to Codecov
