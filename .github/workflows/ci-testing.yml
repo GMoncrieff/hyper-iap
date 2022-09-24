@@ -46,10 +46,5 @@ jobs:
       run: |
         coverage run -m pytest -v --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}.xml
 
-    - name: Statistics
-      if: success()
-      run: |
-        coverage report
-
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
