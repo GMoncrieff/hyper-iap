@@ -39,7 +39,7 @@ jobs:
     - name: Generate Report
       run: |
         coverage run -m pytest
-        coverage xml -i
+        coverage xml -i -o test-results-${{ runner.os }}-${{ matrix.python-version }}.xml
 
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
