@@ -44,5 +44,5 @@ jobs:
 
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
-        with:
-          files: test-results-${{ runner.os }}-${{ matrix.python-version }}.xml
+      with:
+        files: test-results-${{ runner.os }}-${{ matrix.python-version }}.xml
