@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from hyperiap.datasets.base_dataset import BaseDataset
 
 BATCH_SIZE = 128
-NUM_AVAIL_CPUS = len(os.sched_getaffinity(0))
+NUM_AVAIL_CPUS = os.cpu_count()
 NUM_AVAIL_GPUS = torch.cuda.device_count()
 TRANSFORM = None
 
