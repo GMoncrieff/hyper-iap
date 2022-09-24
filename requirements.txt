@@ -1,65 +1,68 @@
-absl-py @ file:///home/conda/feedstock_root/build_artifacts/absl-py_1658854572623/work
-aiohttp @ file:///home/conda/feedstock_root/build_artifacts/aiohttp_1663850762901/work
-aiosignal @ file:///home/conda/feedstock_root/build_artifacts/aiosignal_1636093929600/work
-async-timeout @ file:///home/conda/feedstock_root/build_artifacts/async-timeout_1640026696943/work
-attrs @ file:///home/conda/feedstock_root/build_artifacts/attrs_1659291887007/work
+absl-py==1.2.0
+aiohttp==3.8.3
+aiosignal==1.2.0
+async-timeout==4.0.2
+attrs==22.1.0
 blinker==1.4
-brotlipy @ file:///home/conda/feedstock_root/build_artifacts/brotlipy_1648854167867/work
-cachetools @ file:///home/conda/feedstock_root/build_artifacts/cachetools_1660055382950/work
+brotlipy==0.7.0
+cachetools==5.2.0
 certifi==2022.9.14
-cffi @ file:///home/conda/feedstock_root/build_artifacts/cffi_1656782834004/work
-charset-normalizer @ file:///home/conda/feedstock_root/build_artifacts/charset-normalizer_1661170624537/work
-click @ file:///home/conda/feedstock_root/build_artifacts/click_1651215151197/work
-colorama @ file:///home/conda/feedstock_root/build_artifacts/colorama_1655412516417/work
-coverage @ file:///home/conda/feedstock_root/build_artifacts/coverage_1660692873431/work
-cryptography @ file:///home/conda/feedstock_root/build_artifacts/cryptography_1657173997940/work
-einops @ file:///home/conda/feedstock_root/build_artifacts/einops_1646391317704/work
-flake8 @ file:///home/conda/feedstock_root/build_artifacts/flake8_1659645013175/work
-frozenlist @ file:///home/conda/feedstock_root/build_artifacts/frozenlist_1659556927427/work
-fsspec @ file:///home/conda/feedstock_root/build_artifacts/fsspec_1662037448631/work
-google-auth @ file:///home/conda/feedstock_root/build_artifacts/google-auth_1663915792443/work
-google-auth-oauthlib @ file:///home/conda/feedstock_root/build_artifacts/google-auth-oauthlib_1630497468950/work
-grpcio @ file:///home/conda/feedstock_root/build_artifacts/grpc-split_1662408121911/work
-idna @ file:///home/conda/feedstock_root/build_artifacts/idna_1663625384323/work
-importlib-metadata @ file:///home/conda/feedstock_root/build_artifacts/importlib-metadata_1653252803161/work
-iniconfig @ file:///home/conda/feedstock_root/build_artifacts/iniconfig_1603384189793/work
-Markdown @ file:///home/conda/feedstock_root/build_artifacts/markdown_1657921053229/work
-MarkupSafe @ file:///home/conda/feedstock_root/build_artifacts/markupsafe_1648737547956/work
-mccabe @ file:///home/conda/feedstock_root/build_artifacts/mccabe_1643049622439/work
-multidict @ file:///home/conda/feedstock_root/build_artifacts/multidict_1648882415384/work
-numpy @ file:///home/conda/feedstock_root/build_artifacts/numpy_1662888869821/work
-oauthlib @ file:///home/conda/feedstock_root/build_artifacts/oauthlib_1662766753257/work
-packaging @ file:///home/conda/feedstock_root/build_artifacts/packaging_1637239678211/work
-pluggy @ file:///home/conda/feedstock_root/build_artifacts/pluggy_1648772594861/work
+cffi==1.15.1
+charset-normalizer==2.1.1
+click==8.1.3
+colorama==0.4.5
+coverage==6.4.4
+cryptography==37.0.4
+einops==0.4.1
+flake8==5.0.4
+frozenlist==1.3.1
+fsspec==2022.8.2
+google-auth==2.11.1
+google-auth-oauthlib==0.4.6
+grpcio==1.48.1
+idna==3.4
+importlib-metadata==4.11.4
+iniconfig==1.1.1
+Markdown==3.4.1
+MarkupSafe==2.1.1
+mccabe==0.7.0
+multidict==6.0.2
+numpy==1.23.3
+oauthlib==3.2.1
+packaging==21.3
+pip==22.2.2
+pluggy==1.0.0
 protobuf==3.20.1
-py @ file:///home/conda/feedstock_root/build_artifacts/py_1636301881863/work
+py==1.11.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.7
-pycodestyle @ file:///home/conda/feedstock_root/build_artifacts/pycodestyle_1659638152915/work
-pycparser @ file:///home/conda/feedstock_root/build_artifacts/pycparser_1636257122734/work
-pyDeprecate @ file:///home/conda/feedstock_root/build_artifacts/pydeprecate_1623410077719/work
-pyflakes @ file:///home/conda/feedstock_root/build_artifacts/pyflakes_1659210156976/work
-PyJWT @ file:///home/conda/feedstock_root/build_artifacts/pyjwt_1663432570896/work
-pyOpenSSL @ file:///home/conda/feedstock_root/build_artifacts/pyopenssl_1663846997386/work
-pyparsing @ file:///home/conda/feedstock_root/build_artifacts/pyparsing_1652235407899/work
-PySocks @ file:///home/conda/feedstock_root/build_artifacts/pysocks_1661604839144/work
+pycodestyle==2.9.1
+pycparser==2.21
+pyDeprecate==0.3.2
+pyflakes==2.5.0
+PyJWT==2.5.0
+pyOpenSSL==22.0.0
+pyparsing==3.0.9
+PySocks==1.7.1
 pytest==7.1.3
-pytorch-lightning @ file:///home/conda/feedstock_root/build_artifacts/pytorch-lightning_1663971289049/work
-pyu2f @ file:///home/conda/feedstock_root/build_artifacts/pyu2f_1604248910016/work
-PyYAML @ file:///home/conda/feedstock_root/build_artifacts/pyyaml_1648757090803/work
-requests @ file:///home/conda/feedstock_root/build_artifacts/requests_1661872987712/work
-requests-oauthlib @ file:///home/conda/feedstock_root/build_artifacts/requests-oauthlib_1643557462909/work
-rsa @ file:///home/conda/feedstock_root/build_artifacts/rsa_1658328885051/work
-six @ file:///home/conda/feedstock_root/build_artifacts/six_1620240208055/work
-tensorboard @ file:///home/conda/feedstock_root/build_artifacts/tensorboard_1662755296950/work/tensorboard-2.10.0-py3-none-any.whl
-tensorboard-data-server @ file:///home/conda/feedstock_root/build_artifacts/tensorboard-data-server_1649932762846/work/tensorboard_data_server-0.6.0-py3-none-manylinux2010_x86_64.whl
-tensorboard-plugin-wit @ file:///home/conda/feedstock_root/build_artifacts/tensorboard-plugin-wit_1641458951060/work/tensorboard_plugin_wit-1.8.1-py3-none-any.whl
-tomli @ file:///home/conda/feedstock_root/build_artifacts/tomli_1644342247877/work
-torch @ file:///home/conda/feedstock_root/build_artifacts/pytorch-recipe_1660136134696/work
-torchmetrics @ file:///home/conda/feedstock_root/build_artifacts/torchmetrics_1658640326316/work
-tqdm @ file:///home/conda/feedstock_root/build_artifacts/tqdm_1662214488106/work
-typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/typing_extensions_1656706066251/work
-urllib3 @ file:///home/conda/feedstock_root/build_artifacts/urllib3_1658789158161/work
-Werkzeug @ file:///home/conda/feedstock_root/build_artifacts/werkzeug_1660053523487/work
-yarl @ file:///home/conda/feedstock_root/build_artifacts/yarl_1648966516552/work
-zipp @ file:///home/conda/feedstock_root/build_artifacts/zipp_1659400682470/work
+pytorch-lightning==1.7.7
+pyu2f==0.1.5
+PyYAML==6.0
+requests==2.28.1
+requests-oauthlib==1.3.1
+rsa==4.9
+setuptools==65.3.0
+six==1.16.0
+tensorboard==2.10.0
+tensorboard-data-server==0.6.0
+tensorboard-plugin-wit==1.8.1
+tomli==2.0.1
+torch==1.12.1
+torchmetrics==0.9.3
+tqdm==4.64.1
+typing_extensions==4.3.0
+urllib3==1.26.11
+Werkzeug==2.2.2
+wheel==0.37.1
+yarl==1.7.2
+zipp==3.8.1
