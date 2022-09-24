@@ -5,6 +5,7 @@ import torch
 
 SequenceOrTensor = Union[Sequence, torch.Tensor]
 
+
 class BaseDataset(torch.utils.data.Dataset):
     """Base Dataset class that simply processes data and targets through optional transforms.
     Read more: https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset

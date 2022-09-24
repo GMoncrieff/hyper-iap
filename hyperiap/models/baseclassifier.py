@@ -1,15 +1,14 @@
-
 import torch
 import pytorch_lightning as pl
-from torch.nn import functional as F
 from torchmetrics import Accuracy
 
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 
 OPTIMIZER = "Adam"
 LR = 1e-3
 LOSS = "cross_entropy"
 ONE_CYCLE_TOTAL_STEPS = 100
+
 
 class BaseClassifier(pl.LightningModule):
     def __init__(self, model, args: Namespace = None):
@@ -29,8 +28,10 @@ class BaseClassifier(pl.LightningModule):
             self.loss_fn = getattr(torch.nn.functional, loss)
 
         self.one_cycle_max_lr = self.args.get("one_cycle_max_lr", None)
-        self.one_cycle_total_steps = self.args.get("one_cycle_total_steps", ONE_CYCLE_TOTAL_STEPS)
-        
+        self.one_cycle_total_steps = self.args.get(
+            "one_cycle_total_steps", ONE_CYCLE_TOTAL_STEPS
+        )
+
         self.train_acc = Accuracy()
         self.val_acc = Accuracy()
         self.test_acc = Accuracy()
@@ -39,7 +40,7 @@ class BaseClassifier(pl.LightningModule):
         # use forward for inference/predictions
         embedding = self.model(x)
         return embedding
-    
+
     def predict(self, x):
         logits = self.model(x)
         return torch.argmax(logits, dim=1)
@@ -54,7 +55,7 @@ class BaseClassifier(pl.LightningModule):
         self.log("train/acc", self.train_acc, on_step=False, on_epoch=True)
 
         outputs = {"loss": loss}
-        
+
         return outputs
 
     def validation_step(self, batch, batch_idx):
@@ -67,7 +68,7 @@ class BaseClassifier(pl.LightningModule):
         self.log("val/acc", self.val_acc, on_step=False, on_epoch=True, prog_bar=True)
 
         outputs = {"loss": loss}
-        
+
         return outputs
 
     def test_step(self, batch, batch_idx):
@@ -84,15 +85,33 @@ class BaseClassifier(pl.LightningModule):
         if self.one_cycle_max_lr is None:
             return optimizer
         scheduler = torch.optim.lr_scheduler.OneCycleLR(
-            optimizer=optimizer, max_lr=self.one_cycle_max_lr, total_steps=self.one_cycle_total_steps
+            optimizer=optimizer,
+            max_lr=self.one_cycle_max_lr,
+            total_steps=self.one_cycle_total_steps,
         )
-        return {"optimizer": optimizer, "lr_scheduler": scheduler, "monitor": "val/loss"}
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": scheduler,
+            "monitor": "val/loss",
+        }
 
     @staticmethod
     def add_to_argparse(parser):
-        parser.add_argument("--optimizer", type=str, default=OPTIMIZER, help="optimizer class from torch.optim")
+        parser.add_argument(
+            "--optimizer",
+            type=str,
+            default=OPTIMIZER,
+            help="optimizer class from torch.optim",
+        )
         parser.add_argument("--lr", type=float, default=LR)
         parser.add_argument("--one_cycle_max_lr", type=float, default=None)
-        parser.add_argument("--one_cycle_total_steps", type=int, default=ONE_CYCLE_TOTAL_STEPS)
-        parser.add_argument("--loss", type=str, default=LOSS, help="loss function from torch.nn.functional")
+        parser.add_argument(
+            "--one_cycle_total_steps", type=int, default=ONE_CYCLE_TOTAL_STEPS
+        )
+        parser.add_argument(
+            "--loss",
+            type=str,
+            default=LOSS,
+            help="loss function from torch.nn.functional",
+        )
         return parser

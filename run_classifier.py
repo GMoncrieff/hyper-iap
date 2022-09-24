@@ -84,8 +84,7 @@ def _setup_parser():
         "--stop_early",
         type=int,
         default=0,
-        help="If non-zero, applies early stopping, with the provided value as the 'patience' argument."
-        + " Default is 0.",
+        help="If non-zero, applies early stopping, with the provided value as the 'patience' argument.",
     )
 
     # Get the data and model classes, so that we can add their specific arguments
@@ -112,17 +111,18 @@ def cli_main():
      Run an experiment.
      Sample command:
      ```
-    python training/run_experiment.py --model_class=tempcnn.TEMPCNN --data_class=timeseries_module.TimeSeriesDataModule
+    python run_classifier.py --model_class=tempcnn.TEMPCNN --data_class=timeseries_module.TimeSeriesDataModule
      ```
      For basic help documentation, run the command
      ```
-     python training/run_experiment.py --help
+     python run_classifier.py --help
      ```
-     The available command line args differ depending on some of the arguments, including --model_class and --data_class.
-     To see which command line args are available and read their documentation, provide values for those arguments
-     before invoking --help, like so:
+     The available command line args differ depending on some of the arguments
+     including --model_class and --data_class.
+     To see which command line args are available and read their documentation
+     provide values for those arguments before invoking --help, like so:
      ```
-     python training/run_experiment.py --model_class=tempcnn.TEMPCNN --data_class=timeseries_module.TimeSeriesDataModule --help
+     python run_classifier.py --model_class=tempcnn.TEMPCNN --data_class=timeseries_module.TimeSeriesDataModule --help
     """
     pl.seed_everything(1234)
 

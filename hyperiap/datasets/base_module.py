@@ -15,7 +15,8 @@ TRANSFORM = None
 
 # sensible multiprocessing defaults: at most one worker per CPU
 DEFAULT_NUM_WORKERS = NUM_AVAIL_CPUS
-# but in distributed data parallel mode, we launch a training on each GPU, so must divide out to keep total at one worker per CPU
+# but in distributed data parallel mode, we launch a training on each GPU
+# so must divide out to keep total at one worker per CPU
 DEFAULT_NUM_WORKERS = (
     NUM_AVAIL_CPUS // NUM_AVAIL_GPUS if NUM_AVAIL_GPUS else DEFAULT_NUM_WORKERS
 )
@@ -41,7 +42,7 @@ class BaseDataModule(pl.LightningDataModule):
         self.num_dim: int
         self.data_train: BaseDataset
         self.data_val: BaseDataset
-        self.data_test: BaseDataset 
+        self.data_test: BaseDataset
 
     @staticmethod
     def add_to_argparse(parser):
