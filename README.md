@@ -5,6 +5,7 @@
  
 # Detection of invasive alien plants using hyperspectral imagery    
 [![build](https://github.com/GMoncrieff/hyper-iap/actions/workflows/ci-testing.yml/badge.svg)](https://github.com/GMoncrieff/hyper-iap/actions/workflows/ci-testing.yml)
+[![codecov](https://codecov.io/gh/GMoncrieff/hyper-iap/branch/main/graph/badge.svg?token=AJQEB1CXPZ)](https://codecov.io/gh/GMoncrieff/hyper-iap)
 </div>
  
 ## Description   
