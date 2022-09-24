@@ -5,10 +5,10 @@ on:
   # Trigger the workflow on push or pull request, but only for the master branch
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   pytest:
@@ -50,3 +50,6 @@ jobs:
       if: success()
       run: |
         coverage report
+
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v2
