@@ -32,7 +32,7 @@ oauthlib==3.2.1
 packaging==21.3
 pip==22.2.2
 pluggy==1.0.0
-protobuf==3.20.1
+protobuf==3.19.5
 py==1.11.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.7
