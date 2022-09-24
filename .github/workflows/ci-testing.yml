@@ -36,9 +36,9 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    - name: Tests
+    - name: Generate Report
       run: |
-        coverage run -m pytest -v --junitxml=test-results-${{ runner.os }}-${{ matrix.python-version }}.xml
+        coverage run -m pytest
 
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
