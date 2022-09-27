@@ -51,7 +51,8 @@ class Attention(nn.Module):
 
     def forward(self, x, mask=None):
         # x:[b,n,dim]
-        b, n, _, h = *x.shape, self.heads
+        # b, n, dim, heads
+        _, _, _, h = *x.shape, self.heads
 
         # get qkv tuple:([b,n,head_num*head_dim],[...],[...])
         qkv = self.to_qkv(x).chunk(3, dim=-1)
