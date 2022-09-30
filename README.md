@@ -72,10 +72,10 @@ trainer.fit(model, datamodule=ts)
 
 The module builds on contributions and implementations from :
 
-* [TempCNN](https://github.com/charlotte-pel/igarss2019-dl4sits) [Pelletier et al., 2019](https://www.mdpi.com/2072-4292/11/5/523)
-* [BreizhCrops](https://github.com/dl4sits/BreizhCrops) [Ru{\ss}wurm et al., 2019](https://arxiv.org/abs/1905.11893)
-* [ViT](https://github.com/google-research/vision_transformer) [ Dosovitskiy et al., 2021](https://arxiv.org/abs/2010.11929)
-* [SpectralFormer](https://github.com/charlotte-pel/igarss2019-dl4sits) [Hong et al., 2021](https://ieeexplore.ieee.org/document/9627165)
+* [TempCNN](https://github.com/charlotte-pel/igarss2019-dl4sits) - [Pelletier et al., 2019](https://www.mdpi.com/2072-4292/11/5/523)
+* [BreizhCrops](https://github.com/dl4sits/BreizhCrops) - [Rußwurm et al., 2019](https://arxiv.org/abs/1905.11893)
+* [ViT](https://github.com/google-research/vision_transformer) - [ Dosovitskiy et al., 2021](https://arxiv.org/abs/2010.11929)
+* [SpectralFormer](https://github.com/charlotte-pel/igarss2019-dl4sits) - [Hong et al., 2021](https://ieeexplore.ieee.org/document/9627165)
 * [Full Stack Deep Learning](https://github.com/full-stack-deep-learning/fsdl-text-recognizer-2022)
 * [xbatcher](https://github.com/xarray-contrib/xbatcher)
 * [zen3geo](https://github.com/weiji14/zen3geo)
