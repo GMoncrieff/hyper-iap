@@ -150,9 +150,9 @@ soupsieve==2.3.2.post1
 stack-data==0.5.1
 tblib==1.7.0
 tenacity==8.1.0
-tensorboard==2.10.1
-tensorboard-data-server==0.6.0
-tensorboard-plugin-wit==1.8.1
+tensorboard
+tensorboard-data-server
+tensorboard-plugin-wit
 threadpoolctl==3.1.0
 toml==0.10.2
 tomli==2.0.1
