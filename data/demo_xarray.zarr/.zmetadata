@@ -1,0 +1,146 @@
+{
+    "metadata": {
+        ".zattrs": {},
+        ".zgroup": {
+            "zarr_format": 2
+        },
+        "land_cover/.zarray": {
+            "chunks": [
+                100,
+                100
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<i8",
+            "fill_value": -9999,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                165,
+                331
+            ],
+            "zarr_format": 2
+        },
+        "land_cover/.zattrs": {
+            "AREA_OR_POINT": "Area",
+            "TIFFTAG_RESOLUTIONUNIT": "1 (unitless)",
+            "TIFFTAG_XRESOLUTION": "1",
+            "TIFFTAG_YRESOLUTION": "1",
+            "_ARRAY_DIMENSIONS": [
+                "x",
+                "y"
+            ],
+            "grid_mapping": "spatial_ref",
+            "offsets": [
+                0.0
+            ],
+            "scales": [
+                1.0
+            ]
+        },
+        "reflectance/.zarray": {
+            "chunks": [
+                322,
+                9,
+                100,
+                100
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                322,
+                9,
+                165,
+                331
+            ],
+            "zarr_format": 2
+        },
+        "reflectance/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "wl",
+                "z",
+                "x",
+                "y"
+            ],
+            "grid_mapping": "spatial_ref"
+        },
+        "wl/.zarray": {
+            "chunks": [
+                322
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                322
+            ],
+            "zarr_format": 2
+        },
+        "wl/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "wl"
+            ]
+        },
+        "x/.zarray": {
+            "chunks": [
+                1294
+            ],
+            "compressor": null,
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                165
+            ],
+            "zarr_format": 2
+        },
+        "x/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "x"
+            ]
+        },
+        "y/.zarray": {
+            "chunks": [
+                10140
+            ],
+            "compressor": null,
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                331
+            ],
+            "zarr_format": 2
+        },
+        "y/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "y"
+            ]
+        }
+    },
+    "zarr_consolidated_format": 1
+}

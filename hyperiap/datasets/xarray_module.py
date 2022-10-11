@@ -18,8 +18,8 @@ N_BAND = 322
 N_DIM = 9
 
 PROCESSED_DATA_DIRNAME = "/data"
-PROCESSED_TRAIN_DATA_FILENAME = "test_xarray_labels_new.zarr"
-PROCESSED_TEST_DATA_FILENAME = "test_xarray_labels_new_test.zarr"
+PROCESSED_TRAIN_DATA_FILENAME = "demo_xarray.zarr"
+PROCESSED_TEST_DATA_FILENAME = "demo_xarray__test.zarr"
 XDIM, YDIM, WLDIM, ZDIM = "x", "y", "wl", "z"
 
 
