@@ -1,41 +1,38 @@
 from argparse import Namespace
-import torch
 from torch.utils.data import random_split
-from hyperiap.datasets.base_dataset import BaseDataset
+from hyperiap.datasets.xarray_dataset import MapDataset
 from hyperiap.datasets.base_module import BaseDataModule
 from typing import Optional
+
 import numpy as np
-import os
 from os.path import dirname, abspath
-import requests
+
+import xarray as xr
+import xbatcher
+
+BATCH_SIZE = 1280
 
 SPLIT = 0.2
+N_CLASS = 5
+N_BAND = 322
+N_DIM = 9
+
 PROCESSED_DATA_DIRNAME = "/data"
-PROCESSED_TRAIN_DATA_FILENAME = "ts_data_train.tsv"
-PROCESSED_TEST_DATA_FILENAME = "ts_data_test.tsv"
-RAW_TRAIN_DATA_URL = (
-    "https://raw.githubusercontent.com/hfawaz/cd-diagram/master/FordA/FordA_TRAIN.tsv"
-)
-RAW_TEST_DATA_URL = (
-    "https://raw.githubusercontent.com/hfawaz/cd-diagram/master/FordA/FordA_TEST.tsv"
-)
-xvar = "x"
-yvar = "y"
+PROCESSED_TRAIN_DATA_FILENAME = "test_xarray_labels_new.zarr"
+PROCESSED_TEST_DATA_FILENAME = "test_xarray_labels_new_test.zarr"
+XDIM, YDIM, WLDIM, ZDIM = "x", "y", "wl", "z"
 
 
-class TimeSeriesDataModule(BaseDataModule):
-    """lightning data module for timeseries data"""
+class XarrayDataModule(BaseDataModule):
+    """lightning data module for xaray data"""
 
-    def __init__(
-        self,
-        args: Namespace = None,
-    ):
+    def __init__(self, args: Namespace = None) -> None:
         super().__init__(args)
-
+        self.batch_size = self.args.get("batch_size", BATCH_SIZE)
         self.split = self.args.get("split", SPLIT)
-        self.num_classes = 2
-        self.num_bands = 500
-        self.num_dim = 27
+        self.num_classes = N_CLASS
+        self.num_bands = N_BAND
+        self.num_dim = N_DIM
 
         self.data_train = None
         self.data_test = None
@@ -46,24 +43,35 @@ class TimeSeriesDataModule(BaseDataModule):
         # create paths and filenames
         parent = dirname(abspath("__file__"))
         self.full_path = parent + PROCESSED_DATA_DIRNAME
-        print(self.full_path)
+
         self.full_test_file = self.full_path + "/" + PROCESSED_TEST_DATA_FILENAME
         self.full_train_file = self.full_path + "/" + PROCESSED_TRAIN_DATA_FILENAME
 
-        # download data
-        if not os.path.isfile(self.full_train_file):
-            print(f"downloading train data to {self.full_train_file}...")
-            _download_csv(RAW_TRAIN_DATA_URL, self.full_path, self.full_train_file)
-            print(f"successfully downloaded train data to {self.full_train_file}")
-        else:
-            print(f"found train data at {self.full_train_file}")
+        # load data
+        try:
+            traindata = xr.open_zarr(self.full_train_file)
+        except FileNotFoundError:
+            print(f"Train data file {self.full_train_file} not found")
 
-        if not os.path.isfile(self.full_test_file):
-            print(f"downloading test data to {self.full_test_file}...")
-            _download_csv(RAW_TEST_DATA_URL, self.full_path, self.full_test_file)
-            print(f"successfully downloaded test data to {self.full_test_file}")
-        else:
-            print(f"found test data at {self.full_test_file}")
+        # try:
+        #    testdata = xr.open_zarr(self.full_test_file)
+        # except FileNotFoundError:
+        #    print(f'Test data file {self.full_test_file} not found')
+
+        traindata = traindata.stack(batch=(XDIM, YDIM))
+        # testdata = testdata.stack(batch=(XDIM, YDIM))
+
+        self.batch_gen_train = xbatcher.BatchGenerator(
+            traindata,
+            input_dims={WLDIM: N_BAND, ZDIM: N_DIM, "batch": BATCH_SIZE},
+            concat_input_dims=False,
+            preload_batch=True,
+        )
+        # self.batch_gen_test = xbatcher.BatchGenerator(
+        # testdata,
+        # input_dims = {WLDIM: N_BAND,ZDIM:N_DIM,'batch':BATCH_SIZE},
+        # concat_input_dims=False,
+        # preload_batch=True)
 
     def setup(self, stage: Optional[str] = None):
         """
@@ -71,32 +79,15 @@ class TimeSeriesDataModule(BaseDataModule):
         Setup Datasets
         Split the dataset into train/val/test."""
 
-        test_x, test_y = _read_ts_data(self.full_test_file)
-        train_x, train_y = _read_ts_data(self.full_train_file)
+        traindata = MapDataset(self.batch_gen_train)
+        # self.data_test=traindata = MapDataset(self.batch_gen_test)
 
-        self.data_test = BaseDataset(test_x, test_y, transform=self.transform)
-        data = BaseDataset(train_x, train_y, transform=self.transform)
-
-        dataset_size = len(data)
+        dataset_size = len(traindata)
         split = int(np.floor(self.split * dataset_size))
 
         self.data_train, self.data_val = random_split(
-            data, [dataset_size - split, split]
+            traindata, [dataset_size - split, split]
         )
-
-        # dp = IterableWrapper(iterable=files)
-        # dp = (
-        #     dp.read_from_zarr()
-        #     .slice_with_xbatcher(input_dims={"x": 2, "y": 2})
-        #     .shuffle()
-        #     .sharding_filter()
-        #     .batch(3)
-        #     .collate(collate_fn=xr_collate_fn)
-        # )
-
-        # bgenx = xbatcher.BatchGenerator(ds[xvar], {"x": 2, "y": 2})
-        # bgeny = xbatcher.BatchGenerator(ds[yvar], {"x": 2, "y": 2})
-        # xrbatch = XBatchDataset(bgenx, bgeny)
 
     @staticmethod
     def add_to_argparse(parser):
@@ -107,12 +98,18 @@ class TimeSeriesDataModule(BaseDataModule):
             default=SPLIT,
             help=f"timeseries test/val split. Default is {SPLIT}",
         )
+        parser.add_argument(
+            "--batch_size",
+            type=int,
+            default=BATCH_SIZE,
+            help=f"Number of examples to operate on per forward step. Default is {BATCH_SIZE}.",
+        )
         return parser
 
     def __str__(self) -> str:
         """Print info about the dataset."""
         basic = (
-            "time series example dataset\n"
+            "xarray example dataset\n"
             f"Num classes: {self.num_classes}\n"
             f"Num bands: {self.num_bands}\n"
             f"Num dim: {self.num_dim}\n"
@@ -121,32 +118,12 @@ class TimeSeriesDataModule(BaseDataModule):
             return basic
 
         x, y = next(iter(self.train_dataloader()))
+
+        test_size = 0 if self.data_test is None else len(self.data_test)
+
         data = (
-            f"Train/val/test sizes: {len(self.data_train)}, {len(self.data_val)}, {len(self.data_test)}\n"
+            f"Train/val/test sizes: {len(self.data_train)}, {len(self.data_val)}, {test_size}\n"
             f"Batch x stats: {(x.shape, x.dtype, x.min().item(), x.mean().item(), x.std().item(), x.max().item())}\n"
             f"Batch y stats: {(y.shape, y.dtype, y.min().item(), y.max().item())}\n"
         )
         return basic + data
-
-
-def _read_ts_data(file: str):
-    """Reads the data from the file and returns a tuple of tensors"""
-    data = np.loadtxt(file, delimiter="\t")
-    y = data[:, 0]
-    x = data[:, 1:]
-    # x = x.reshape((x.shape[0], x.shape[1], 1))
-    # rep 27 times to simulate added dim
-    x = np.repeat(x[:, :, np.newaxis], 27, axis=2)
-    # x = x.transpose(0,2,1)
-    y = y.astype(int)
-    y[y == -1] = 0
-    return torch.tensor(x).float(), torch.tensor(y)
-
-
-def _download_csv(url: str, dir: str, file: str) -> None:
-    """download csv file from url and place in dir"""
-    os.makedirs(dir, exist_ok=True)
-    if not os.path.isfile(file):
-        r = requests.get(url)
-        with open(file, "wb") as f:
-            f.write(r.content)

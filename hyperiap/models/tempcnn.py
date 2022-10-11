@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torch.utils.data
 
+from einops import rearrange
+
 INPUT_DIM = 27
 NUM_CLASSES = 2
 SEQ_LEN = 500
@@ -55,8 +57,7 @@ class TEMPCNN(torch.nn.Module):
         self.out = nn.Linear(4 * self.hidden, self.num_classes)
 
     def forward(self, x):
-        # require NxTxD
-        x = x.transpose(1, 2)
+        x = rearrange(x, "s d t b -> (s b) t d", s=1)
         x = self.conv_bn_relu1(x)
         x = self.conv_bn_relu2(x)
         x = self.conv_bn_relu3(x)

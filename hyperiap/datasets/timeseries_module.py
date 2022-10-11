@@ -1,7 +1,7 @@
 from argparse import Namespace
 import torch
 from torch.utils.data import random_split
-from hyperiap.datasets.base_dataset import BaseDataset
+from hyperiap.datasets.simple_dataset import SimpleDataset
 from hyperiap.datasets.base_module import BaseDataModule
 from typing import Optional
 import numpy as np
@@ -72,8 +72,8 @@ class TimeSeriesDataModule(BaseDataModule):
         test_x, test_y = _read_ts_data(self.full_test_file)
         train_x, train_y = _read_ts_data(self.full_train_file)
 
-        self.data_test = BaseDataset(test_x, test_y, transform=self.transform)
-        data = BaseDataset(train_x, train_y, transform=self.transform)
+        self.data_test = SimpleDataset(test_x, test_y, transform=self.transform)
+        data = SimpleDataset(train_x, train_y, transform=self.transform)
 
         dataset_size = len(data)
         split = int(np.floor(self.split * dataset_size))
