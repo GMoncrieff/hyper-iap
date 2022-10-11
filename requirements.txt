@@ -174,7 +174,7 @@ Werkzeug==2.2.2
 wheel==0.37.1
 wxee==0.3.3
 xarray==2022.6.0
-xbatcher==0.1.0.post86
+git+https://github.com/xarray-contrib/xbatcher.git@44fd755c6a27968562a073284f56aec0f5fb83d8#egg=xbatcher
 xoak==0.1.1
 yarl==1.7.2
 zarr==2.13.2
