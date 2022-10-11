@@ -58,7 +58,7 @@ google-cloud-core
 google-cloud-storage
 google-crc32c
 google-resumable-media
-googleapis-common-proto
+googleapis-common-protos
 grpcio==1.48.1
 h5netcdf==1.0.2
 h5py==3.7.0
