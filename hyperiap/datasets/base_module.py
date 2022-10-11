@@ -4,11 +4,8 @@ from typing import Optional
 
 import pytorch_lightning as pl
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 
-from hyperiap.datasets.base_dataset import BaseDataset
-
-BATCH_SIZE = 128
 NUM_AVAIL_CPUS = len(os.sched_getaffinity(0))
 NUM_AVAIL_GPUS = torch.cuda.device_count()
 TRANSFORM = None
@@ -30,7 +27,6 @@ class BaseDataModule(pl.LightningDataModule):
     def __init__(self, args: Namespace = None) -> None:
         super().__init__()
         self.args = vars(args) if args is not None else {}
-        self.batch_size = self.args.get("batch_size", BATCH_SIZE)
         self.num_workers = self.args.get("num_workers", DEFAULT_NUM_WORKERS)
         self.transform = self.args.get("transform", TRANSFORM)
 
@@ -40,18 +36,12 @@ class BaseDataModule(pl.LightningDataModule):
         self.num_classes: int
         self.num_bands: int
         self.num_dim: int
-        self.data_train: BaseDataset
-        self.data_val: BaseDataset
-        self.data_test: BaseDataset
+        self.data_train: Dataset
+        self.data_val: Dataset
+        self.data_test: Dataset
 
     @staticmethod
     def add_to_argparse(parser):
-        parser.add_argument(
-            "--batch_size",
-            type=int,
-            default=BATCH_SIZE,
-            help=f"Number of examples to operate on per forward step. Default is {BATCH_SIZE}.",
-        )
         parser.add_argument(
             "--num_workers",
             type=int,
@@ -90,7 +80,6 @@ class BaseDataModule(pl.LightningDataModule):
         return DataLoader(
             self.data_train,
             shuffle=True,
-            batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=self.on_gpu,
         )
@@ -99,7 +88,6 @@ class BaseDataModule(pl.LightningDataModule):
         return DataLoader(
             self.data_val,
             shuffle=False,
-            batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=self.on_gpu,
         )
@@ -108,7 +96,6 @@ class BaseDataModule(pl.LightningDataModule):
         return DataLoader(
             self.data_test,
             shuffle=False,
-            batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=self.on_gpu,
         )

@@ -47,6 +47,7 @@ class BaseClassifier(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y = batch
+        y = y.squeeze()
         logits = self(x)
         loss = self.loss_fn(logits, y)
         self.train_acc(logits, y)
@@ -60,6 +61,7 @@ class BaseClassifier(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
+        y = y.squeeze()
         logits = self(x)
         loss = self.loss_fn(logits, y)
         self.val_acc(logits, y)
@@ -73,6 +75,7 @@ class BaseClassifier(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         x, y = batch
+        y = y.squeeze()
         logits = self(x)
         loss = self.loss_fn(logits, y)
         self.test_acc(logits, y)
