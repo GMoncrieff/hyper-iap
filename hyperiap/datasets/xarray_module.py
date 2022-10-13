@@ -10,7 +10,7 @@ from os.path import dirname, abspath
 import xarray as xr
 import xbatcher
 
-BATCH_SIZE = 1280
+BATCH_SIZE = 128
 
 SPLIT = 0.2
 N_CLASS = 5

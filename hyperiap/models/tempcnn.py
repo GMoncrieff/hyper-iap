@@ -20,7 +20,7 @@ class TEMPCNN(torch.nn.Module):
         data_config: Dict[str, Any],
         args: Namespace = None,
     ) -> None:
-        super(TEMPCNN, self).__init__()
+        super().__init__()
         self.args = vars(args) if args is not None else {}
         self.data_config = data_config
         # model params
@@ -57,7 +57,7 @@ class TEMPCNN(torch.nn.Module):
         self.out = nn.Linear(4 * self.hidden, self.num_classes)
 
     def forward(self, x):
-        x = rearrange(x, "s d t b -> (s b) t d", s=1)
+        x = rearrange(x, "s t c b -> (s b) c t", s=1)
         x = self.conv_bn_relu1(x)
         x = self.conv_bn_relu2(x)
         x = self.conv_bn_relu3(x)

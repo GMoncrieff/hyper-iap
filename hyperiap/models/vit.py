@@ -1,33 +1,28 @@
+from argparse import Namespace
+from typing import Any, Dict
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
-from einops import rearrange, repeat
+from einops import rearrange
+from einops.layers.torch import Rearrange
 
-
-class Residual(nn.Module):
-    def __init__(self, fn):
-        super().__init__()
-        self.fn = fn
-
-    def forward(self, x, **kwargs):
-        return self.fn(x, **kwargs) + x
-
-
-class PreNorm(nn.Module):
-    def __init__(self, dim, fn):
-        super().__init__()
-        self.norm = nn.LayerNorm(dim)
-        self.fn = fn
-
-    def forward(self, x, **kwargs):
-        return self.fn(self.norm(x), **kwargs)
+# model params
+DIM = 64
+DEPTH = 5
+HEADS = 4
+DIM_HEAD = 16
+MLP_DIM = 8
+DROPOUT = 0.1
+EMB_DROPOUT = 0.1
+PATCH_LEN = 2
+MODE = "ViT"
 
 
 class FeedForward(nn.Module):
-    def __init__(self, dim, hidden_dim, dropout=0.0):
+    def __init__(self, dim, hidden_dim, dropout):
         super().__init__()
         self.net = nn.Sequential(
+            nn.LayerNorm(dim),
             nn.Linear(dim, hidden_dim),
             nn.GELU(),
             nn.Dropout(dropout),
@@ -45,154 +40,125 @@ class Attention(nn.Module):
         inner_dim = dim_head * heads
         self.heads = heads
         self.scale = dim_head**-0.5
+        self.norm = nn.LayerNorm(dim)
+
+        self.attend = nn.Softmax(dim=-1)
 
         self.to_qkv = nn.Linear(dim, inner_dim * 3, bias=False)
         self.to_out = nn.Sequential(nn.Linear(inner_dim, dim), nn.Dropout(dropout))
 
-    def forward(self, x, mask=None):
-        # x:[b,n,dim]
-        # b, n, dim, heads
-        _, _, _, h = *x.shape, self.heads
+    def forward(self, x):
+        x = self.norm(x)
 
-        # get qkv tuple:([b,n,head_num*head_dim],[...],[...])
         qkv = self.to_qkv(x).chunk(3, dim=-1)
-        # split q,k,v from [b,n,head_num*head_dim] -> [b,head_num,n,head_dim]
-        q, k, v = map(lambda t: rearrange(t, "b n (h d) -> b h n d", h=h), qkv)
+        q, k, v = map(lambda t: rearrange(t, "b n (h d) -> b h n d", h=self.heads), qkv)
 
-        # transpose(k) * q / sqrt(head_dim) -> [b,head_num,n,n]
-        dots = torch.einsum("bhid,bhjd->bhij", q, k) * self.scale
-        mask_value = -torch.finfo(dots.dtype).max
+        dots = torch.matmul(q, k.transpose(-1, -2)) * self.scale
 
-        # mask value: -inf
-        if mask is not None:
-            mask = F.pad(mask.flatten(1), (1, 0), value=True)
-            assert mask.shape[-1] == dots.shape[-1], "mask has incorrect dimensions"
-            mask = mask[:, None, :] * mask[:, :, None]
-            dots.masked_fill_(~mask, mask_value)
-            del mask
+        attn = self.attend(dots)
 
-        # softmax normalization -> attention matrix
-        attn = dots.softmax(dim=-1)
-        # value * attention matrix -> output
-        out = torch.einsum("bhij,bhjd->bhid", attn, v)
-        # cat all output -> [b, n, head_num*head_dim]
+        out = torch.matmul(attn, v)
         out = rearrange(out, "b h n d -> b n (h d)")
-        out = self.to_out(out)
-        return out
+        return self.to_out(out)
 
 
 class Transformer(nn.Module):
-    def __init__(
-        self, dim, depth, heads, dim_head, mlp_head, dropout, num_channel, mode
-    ):
+    def __init__(self, dim, depth, heads, dim_head, mlp_head, dropout):
         super().__init__()
-
         self.layers = nn.ModuleList([])
         for _ in range(depth):
             self.layers.append(
                 nn.ModuleList(
                     [
-                        Residual(
-                            PreNorm(
-                                dim,
-                                Attention(
-                                    dim, heads=heads, dim_head=dim_head, dropout=dropout
-                                ),
-                            )
-                        ),
-                        Residual(
-                            PreNorm(dim, FeedForward(dim, mlp_head, dropout=dropout))
-                        ),
+                        Attention(dim, heads=heads, dim_head=dim_head, dropout=dropout),
+                        FeedForward(dim, mlp_head, dropout),
                     ]
                 )
             )
 
-        self.mode = mode
-        self.skipcat = nn.ModuleList([])
-        for _ in range(depth - 2):
-            self.skipcat.append(
-                nn.Conv2d(num_channel + 1, num_channel + 1, [1, 2], 1, 0)
-            )
-
-    def forward(self, x, mask=None):
-        if self.mode == "ViT":
-            for attn, ff in self.layers:
-                x = attn(x, mask=mask)
-                x = ff(x)
-        elif self.mode == "CAF":
-            last_output = []
-            nl = 0
-            for attn, ff in self.layers:
-                last_output.append(x)
-                if nl > 1:
-                    x = self.skipcat[nl - 2](
-                        torch.cat(
-                            [x.unsqueeze(3), last_output[nl - 2].unsqueeze(3)], dim=3
-                        )
-                    ).squeeze(3)
-                x = attn(x, mask=mask)
-                x = ff(x)
-                nl += 1
-
+    def forward(self, x):
+        for attn, ff in self.layers:
+            x = attn(x) + x
+            x = ff(x) + x
         return x
 
 
-class VIT(nn.Module):
+class simpleVIT(nn.Module):
     def __init__(
         self,
-        image_size,
-        near_band,
-        num_patches,
-        num_classes,
-        dim,
-        depth,
-        heads,
-        mlp_dim,
-        pool="cls",
-        channels=1,
-        dim_head=16,
-        dropout=0.0,
-        emb_dropout=0.0,
-        mode="ViT",
-    ):
+        data_config: Dict[str, Any],
+        args: Namespace = None,
+    ) -> None:
         super().__init__()
+        self.args = vars(args) if args is not None else {}
+        self.data_config = data_config
+        # data params
+        num_classes = data_config["num_classes"]
+        seq_size = data_config["num_bands"]
+        near_band = data_config["num_dim"]
+        # model params
+        dim = self.args.get("dim", DIM)
+        depth = self.args.get("depth", DEPTH)
+        heads = self.args.get("heads", HEADS)
+        dim_head = self.args.get("dim_heads", DIM_HEAD)
+        mlp_dim = self.args.get("mlp_dim", MLP_DIM)
+        dropout = self.args.get("dropout", DROPOUT)
+        emb_dropout = self.args.get("emb_dropout", EMB_DROPOUT)
+        # mode = self.args.get("mode", MODE)
+        patch_len = self.args.get("patch_len", PATCH_LEN)
 
-        patch_dim = image_size**2 * near_band
+        # TO DO add padding such that any patch len can be given
+        assert seq_size % patch_len == 0
+        num_patches = seq_size // patch_len
+        patch_dim = near_band * patch_len
 
-        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, dim))
-        self.patch_to_embedding = nn.Linear(patch_dim, dim)
-        self.cls_token = nn.Parameter(torch.randn(1, 1, dim))
-
-        self.dropout = nn.Dropout(emb_dropout)
-        self.transformer = Transformer(
-            dim, depth, heads, dim_head, mlp_dim, dropout, num_patches, mode
+        # self.to_embed_patch = nn.Sequential(
+        #    Rearrange('s t c b -> (s b) c t', s=1),
+        #    nn.Conv1d(near_band,dim, kernel_size=patch_len,stride=patch_len),
+        #    Rearrange('b d t -> b t d')
+        # )
+        self.to_patch_embedding = nn.Sequential(
+            Rearrange("s (t p) c b -> (b s) t (p c)", p=patch_len, s=1),
+            nn.Linear(patch_dim, dim),
         )
 
-        self.pool = pool
+        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches, dim))
+
+        self.dropout = nn.Dropout(emb_dropout)
+
+        self.transformer = Transformer(dim, depth, heads, dim_head, mlp_dim, dropout)
+
         self.to_latent = nn.Identity()
+        self.linear_head = nn.Sequential(nn.LayerNorm(dim), nn.Linear(dim, num_classes))
 
-        self.mlp_head = nn.Sequential(nn.LayerNorm(dim), nn.Linear(dim, num_classes))
-
-    def forward(self, x, mask=None):
-
-        # patchs[batch, patch_num, patch_size*patch_size*c]  [batch,200,145*145]
-        # x = rearrange(x, 'b c h w -> b c (h w)')
+    def forward(self, x):
 
         # embedding every patch vector to embedding size: [batch, patch_num, embedding_size]
-        x = self.patch_to_embedding(x)  # [b,n,dim]
-        b, n, _ = x.shape
+        # x = self.to_embed_patch(x)
+        x = self.to_patch_embedding(x)  # [b,n,dim]
 
         # add position embedding
-        cls_tokens = repeat(self.cls_token, "() n d -> b n d", b=b)  # [b,1,dim]
-        x = torch.cat((cls_tokens, x), dim=1)  # [b,n+1,dim]
-        x += self.pos_embedding[:, : (n + 1)]
+        pe = self.pos_embedding
+        # pe = posemb_sincos_2d(x)
+        x = rearrange(x, "b ... d -> b (...) d") + pe
         x = self.dropout(x)
 
         # transformer: x[b,n + 1,dim] -> x[b,n + 1,dim]
-        x = self.transformer(x, mask)
+        x = self.transformer(x)
+        x = x.mean(dim=1)
 
-        # classification: using cls_token output
-        x = self.to_latent(x[:, 0])
+        x = self.to_latent(x)
+        return self.linear_head(x)
 
-        # MLP classification layer
-        return self.mlp_head(x)
+    @staticmethod
+    def add_to_argparse(parser):
+        parser.add_argument("--dim", type=int, default=DIM)
+        parser.add_argument("--depth", type=int, default=DEPTH)
+        parser.add_argument("--heads", type=int, default=HEADS)
+        parser.add_argument("--dim_head", type=int, default=DIM_HEAD)
+        parser.add_argument("--mlp_dim", type=int, default=MLP_DIM)
+        parser.add_argument("--dropout", type=float, default=DROPOUT)
+        parser.add_argument("--emb_dropout", type=float, default=EMB_DROPOUT)
+        parser.add_argument("--mode", type=str, default=MODE)
+        parser.add_argument("--patch_len", type=int, default=PATCH_LEN)
+        return parser

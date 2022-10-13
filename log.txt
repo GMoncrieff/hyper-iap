@@ -1,96 +1,0 @@
-============================= test session starts ==============================
-platform linux -- Python 3.9.13, pytest-7.1.3, pluggy-1.0.0
-rootdir: /home/glennmoncrieff/hyperiap, configfile: setup.cfg
-collected 3 items
-
-tests/test_classifier.py F                                               [ 33%]
-tests/test_loaders.py .                                                  [ 66%]
-tests/test_models.py .                                                   [100%]
-
-=================================== FAILURES ===================================
-___________________________ test_tempcnn_classifier ____________________________
-
-    def test_tempcnn_classifier():
-        seed_everything(1234)
-    
-        xmod= XarrayDataModule()
-    
-    
-        model = BaseClassifier(TEMPCNN(data_config=xmod.config()))
-    
-        trainer = Trainer(limit_train_batches=5, limit_val_batches=2, max_epochs=2)
-        trainer.fit(model, datamodule=xmod)
-    
->       assert results[0]["test/acc"] > 0.6
-E       NameError: name 'results' is not defined
-
-tests/test_classifier.py:21: NameError
------------------------------ Captured stdout call -----------------------------
-Sanity Checking: 0it [00:00, ?it/s]Sanity Checking:   0%|          | 0/2 [00:00<?, ?it/s]Sanity Checking DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]Sanity Checking DataLoader 0:  50%|█████     | 1/2 [00:00<00:00,  2.39it/s]Sanity Checking DataLoader 0: 100%|██████████| 2/2 [00:00<00:00,  2.45it/s]                                                                           Training: 0it [00:00, ?it/s]Training:   0%|          | 0/7 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/7 [00:00<?, ?it/s] Epoch 0:  14%|█▍        | 1/7 [00:01<00:09,  1.54s/it]Epoch 0:  14%|█▍        | 1/7 [00:01<00:09,  1.54s/it, loss=2.01, v_num=56]Epoch 0:  29%|██▊       | 2/7 [00:02<00:07,  1.44s/it, loss=2.01, v_num=56]Epoch 0:  29%|██▊       | 2/7 [00:02<00:07,  1.44s/it, loss=2.04, v_num=56]Epoch 0:  43%|████▎     | 3/7 [00:04<00:05,  1.41s/it, loss=2.04, v_num=56]Epoch 0:  43%|████▎     | 3/7 [00:04<00:05,  1.41s/it, loss=1.96, v_num=56]Epoch 0:  57%|█████▋    | 4/7 [00:05<00:04,  1.39s/it, loss=1.96, v_num=56]Epoch 0:  57%|█████▋    | 4/7 [00:05<00:04,  1.39s/it, loss=1.89, v_num=56]Epoch 0:  71%|███████▏  | 5/7 [00:06<00:02,  1.39s/it, loss=1.89, v_num=56]Epoch 0:  71%|███████▏  | 5/7 [00:06<00:02,  1.39s/it, loss=1.82, v_num=56]
-Validation: 0it [00:00, ?it/s][A
-Validation:   0%|          | 0/2 [00:00<?, ?it/s][A
-Validation DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s][A
-Validation DataLoader 0:  50%|█████     | 1/2 [00:00<00:00,  2.52it/s][AEpoch 0:  86%|████████▌ | 6/7 [00:07<00:01,  1.24s/it, loss=1.82, v_num=56]
-Validation DataLoader 0: 100%|██████████| 2/2 [00:00<00:00,  2.67it/s][AEpoch 0: 100%|██████████| 7/7 [00:07<00:00,  1.11s/it, loss=1.82, v_num=56]Epoch 0: 100%|██████████| 7/7 [00:07<00:00,  1.11s/it, loss=1.82, v_num=56, val/loss=1.870, val/acc=0.0406]
-                                                                      [AEpoch 0: 100%|██████████| 7/7 [00:07<00:00,  1.11s/it, loss=1.82, v_num=56, val/loss=1.870, val/acc=0.0406]Epoch 0:   0%|          | 0/7 [00:00<?, ?it/s, loss=1.82, v_num=56, val/loss=1.870, val/acc=0.0406]        Epoch 1:   0%|          | 0/7 [00:00<?, ?it/s, loss=1.82, v_num=56, val/loss=1.870, val/acc=0.0406]Epoch 1:  14%|█▍        | 1/7 [00:01<00:09,  1.59s/it, loss=1.82, v_num=56, val/loss=1.870, val/acc=0.0406]Epoch 1:  14%|█▍        | 1/7 [00:01<00:09,  1.59s/it, loss=1.75, v_num=56, val/loss=1.870, val/acc=0.0406]Epoch 1:  29%|██▊       | 2/7 [00:02<00:07,  1.48s/it, loss=1.75, v_num=56, val/loss=1.870, val/acc=0.0406]Epoch 1:  29%|██▊       | 2/7 [00:02<00:07,  1.48s/it, loss=1.7, v_num=56, val/loss=1.870, val/acc=0.0406] Epoch 1:  43%|████▎     | 3/7 [00:04<00:05,  1.44s/it, loss=1.7, v_num=56, val/loss=1.870, val/acc=0.0406]Epoch 1:  43%|████▎     | 3/7 [00:04<00:05,  1.44s/it, loss=1.65, v_num=56, val/loss=1.870, val/acc=0.0406]Epoch 1:  57%|█████▋    | 4/7 [00:05<00:04,  1.43s/it, loss=1.65, v_num=56, val/loss=1.870, val/acc=0.0406]Epoch 1:  57%|█████▋    | 4/7 [00:05<00:04,  1.43s/it, loss=1.6, v_num=56, val/loss=1.870, val/acc=0.0406] Epoch 1:  71%|███████▏  | 5/7 [00:07<00:02,  1.41s/it, loss=1.6, v_num=56, val/loss=1.870, val/acc=0.0406]Epoch 1:  71%|███████▏  | 5/7 [00:07<00:02,  1.41s/it, loss=1.56, v_num=56, val/loss=1.870, val/acc=0.0406]
-Validation: 0it [00:00, ?it/s][A
-Validation:   0%|          | 0/2 [00:00<?, ?it/s][A
-Validation DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s][A
-Validation DataLoader 0:  50%|█████     | 1/2 [00:00<00:00,  2.64it/s][AEpoch 1:  86%|████████▌ | 6/7 [00:07<00:01,  1.26s/it, loss=1.56, v_num=56, val/loss=1.870, val/acc=0.0406]
-Validation DataLoader 0: 100%|██████████| 2/2 [00:00<00:00,  2.74it/s][AEpoch 1: 100%|██████████| 7/7 [00:07<00:00,  1.13s/it, loss=1.56, v_num=56, val/loss=1.870, val/acc=0.0406]Epoch 1: 100%|██████████| 7/7 [00:07<00:00,  1.13s/it, loss=1.56, v_num=56, val/loss=1.080, val/acc=0.866] 
-                                                                      [AEpoch 1: 100%|██████████| 7/7 [00:07<00:00,  1.13s/it, loss=1.56, v_num=56, val/loss=1.080, val/acc=0.866]Epoch 1: 100%|██████████| 7/7 [00:07<00:00,  1.14s/it, loss=1.56, v_num=56, val/loss=1.080, val/acc=0.866]
------------------------------- Captured log call -------------------------------
-INFO     pytorch_lightning.utilities.seed:seed.py:71 Global seed set to 1234
-INFO     pytorch_lightning.utilities.rank_zero:trainer.py:1751 GPU available: False, used: False
-INFO     pytorch_lightning.utilities.rank_zero:trainer.py:1754 TPU available: False, using: 0 TPU cores
-INFO     pytorch_lightning.utilities.rank_zero:trainer.py:1757 IPU available: False, using: 0 IPUs
-INFO     pytorch_lightning.utilities.rank_zero:trainer.py:1760 HPU available: False, using: 0 HPUs
-INFO     pytorch_lightning.callbacks.model_summary:model_summary.py:83 
-  | Name      | Type     | Params
----------------------------------------
-0 | model     | TEMPCNN  | 749 K 
-1 | train_acc | Accuracy | 0     
-2 | val_acc   | Accuracy | 0     
-3 | test_acc  | Accuracy | 0     
----------------------------------------
-749 K     Trainable params
-0         Non-trainable params
-749 K     Total params
-2.999     Total estimated model params size (MB)
-INFO     pytorch_lightning.utilities.rank_zero:fit_loop.py:170 `Trainer.fit` stopped: `max_epochs=2` reached.
-=============================== warnings summary ===============================
-../../../opt/conda/envs/hyper/lib/python3.9/site-packages/_pytest/config/__init__.py:1199
-  /opt/conda/envs/hyper/lib/python3.9/site-packages/_pytest/config/__init__.py:1199: PytestRemovedIn8Warning: The --strict option is deprecated, use --strict-markers instead.
-    self.issue_config_time_warning(
-
-../../../opt/conda/envs/hyper/lib/python3.9/site-packages/xarray/backends/cfgrib_.py:29
-  /opt/conda/envs/hyper/lib/python3.9/site-packages/xarray/backends/cfgrib_.py:29: UserWarning: Failed to load cfgrib - most likely there is a problem accessing the ecCodes library. Try `import cfgrib` to get the full error message
-    warnings.warn(
-
-../../../opt/conda/envs/hyper/lib/python3.9/site-packages/pydap/model.py:175
-  /opt/conda/envs/hyper/lib/python3.9/site-packages/pydap/model.py:175: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated since Python 3.3, and in 3.10 it will stop working
-    from collections import OrderedDict, Mapping
-
-../../../opt/conda/envs/hyper/lib/python3.9/site-packages/pydap/responses/das.py:14
-  /opt/conda/envs/hyper/lib/python3.9/site-packages/pydap/responses/das.py:14: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated since Python 3.3, and in 3.10 it will stop working
-    from collections import Iterable
-
-tests/test_classifier.py::test_tempcnn_classifier
-  /opt/conda/envs/hyper/lib/python3.9/site-packages/xarray/backends/plugins.py:64: RuntimeWarning: Engine 'cfgrib' loading failed:
-  Cannot find the ecCodes library
-    warnings.warn(f"Engine {name!r} loading failed:\n{ex}", RuntimeWarning)
-
-tests/test_classifier.py::test_tempcnn_classifier
-  /opt/conda/envs/hyper/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py:1892: PossibleUserWarning: The number of training batches (5) is smaller than the logging interval Trainer(log_every_n_steps=50). Set a lower value for log_every_n_steps if you want to see logs for the training epoch.
-    rank_zero_warn(
-
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-============================== slowest durations ===============================
-18.22s call     tests/test_classifier.py::test_tempcnn_classifier
-1.48s call     tests/test_loaders.py::test_xarray_loader
-0.01s call     tests/test_models.py::test_tempcnn
-
-(6 durations < 0.005s hidden.  Use -vv to show these durations.)
-=========================== short test summary info ============================
-FAILED tests/test_classifier.py::test_tempcnn_classifier - NameError: name 'r...
-=================== 1 failed, 2 passed, 6 warnings in 22.59s ===================
