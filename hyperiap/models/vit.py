@@ -83,32 +83,25 @@ class Transformer(nn.Module):
         return x
 
 
-class simpleVIT(nn.Module):
+class simpleVITextractor(nn.Module):
     def __init__(
         self,
-        data_config: Dict[str, Any],
-        args: Namespace = None,
+        seq_size,
+        near_band,
+        dim,
+        depth,
+        heads,
+        dim_head,
+        mlp_dim,
+        dropout,
+        emb_dropout,
+        patch_len,
     ) -> None:
         super().__init__()
-        self.args = vars(args) if args is not None else {}
-        self.data_config = data_config
-        # data params
-        num_classes = data_config["num_classes"]
-        seq_size = data_config["num_bands"]
-        near_band = data_config["num_dim"]
-        # model params
-        dim = self.args.get("dim", DIM)
-        depth = self.args.get("depth", DEPTH)
-        heads = self.args.get("heads", HEADS)
-        dim_head = self.args.get("dim_heads", DIM_HEAD)
-        mlp_dim = self.args.get("mlp_dim", MLP_DIM)
-        dropout = self.args.get("dropout", DROPOUT)
-        emb_dropout = self.args.get("emb_dropout", EMB_DROPOUT)
-        # mode = self.args.get("mode", MODE)
-        patch_len = self.args.get("patch_len", PATCH_LEN)
 
         # TO DO add padding such that any patch len can be given
         assert seq_size % patch_len == 0
+        # TO DO add padding such that any patch len can be given
         num_patches = seq_size // patch_len
         patch_dim = near_band * patch_len
 
@@ -129,7 +122,6 @@ class simpleVIT(nn.Module):
         self.transformer = Transformer(dim, depth, heads, dim_head, mlp_dim, dropout)
 
         self.to_latent = nn.Identity()
-        self.linear_head = nn.Sequential(nn.LayerNorm(dim), nn.Linear(dim, num_classes))
 
     def forward(self, x):
 
@@ -147,7 +139,71 @@ class simpleVIT(nn.Module):
         x = self.transformer(x)
         x = x.mean(dim=1)
 
-        x = self.to_latent(x)
+        return self.to_latent(x)
+
+
+class TransferLearningVIT(nn.Module):
+    def __init__(self, backbone, data_config):
+        super().__init__()
+        self.data_config = data_config
+        # init a pretrained model
+        dim = backbone.model.dim
+        self.feature_extractor = backbone.model.embedding
+
+        num_classes = data_config["num_classes"]
+        self.linear_head = nn.Sequential(nn.LayerNorm(dim), nn.Linear(dim, num_classes))
+
+    def forward(self, x):
+        with torch.no_grad():
+            embeddings = self.feature_extractor(x)
+        return self.linear_head(embeddings)
+
+
+class simpleVIT(nn.Module):
+    def __init__(
+        self,
+        data_config: Dict[str, Any],
+        args: Namespace = None,
+    ) -> None:
+        super().__init__()
+        self.args = vars(args) if args is not None else {}
+        self.data_config = data_config
+        # data params
+        self.num_classes = data_config["num_classes"]
+        self.dim = self.args.get("dim", DIM)
+
+        seq_size = data_config["num_bands"]
+        near_band = data_config["num_dim"]
+        # model params
+
+        depth = self.args.get("depth", DEPTH)
+        heads = self.args.get("heads", HEADS)
+        dim_head = self.args.get("dim_heads", DIM_HEAD)
+        mlp_dim = self.args.get("mlp_dim", MLP_DIM)
+        dropout = self.args.get("dropout", DROPOUT)
+        emb_dropout = self.args.get("emb_dropout", EMB_DROPOUT)
+        # mode = self.args.get("mode", MODE)
+        patch_len = self.args.get("patch_len", PATCH_LEN)
+
+        self.embedding = simpleVITextractor(
+            seq_size,
+            near_band,
+            self.dim,
+            depth,
+            heads,
+            dim_head,
+            mlp_dim,
+            dropout,
+            emb_dropout,
+            patch_len,
+        )
+        self.linear_head = nn.Sequential(
+            nn.LayerNorm(self.dim), nn.Linear(self.dim, self.num_classes)
+        )
+
+    def forward(self, x):
+
+        x = self.embedding(x)
         return self.linear_head(x)
 
     @staticmethod

@@ -4,29 +4,36 @@ import torch.nn.functional as F
 from einops import repeat
 from hyperiap.models.vit import Transformer
 
+from argparse import Namespace
+
+DECODER_DIM = 128
+MASKING_RATIO = 0.75
+DECODER_DEPTH = 1
+DECODER_HEADS = 4
+DECODER_DIM_HEAD = 32
+
 
 class MAE(nn.Module):
-    def __init__(
-        self,
-        *,
-        encoder,
-        decoder_dim,
-        masking_ratio=0.75,
-        decoder_depth=1,
-        decoder_heads=8,
-        decoder_dim_head=64
-    ):
+    def __init__(self, encoder, args: Namespace = None):
         super().__init__()
+        self.args = vars(args) if args is not None else {}
+
+        decoder_dim = self.args.get("decoder_dim", DECODER_DIM)
+        masking_ratio = self.args.get("masking_ratio", MASKING_RATIO)
+        decoder_depth = self.args.get("decoder_depth", DECODER_DEPTH)
+        decoder_heads = self.args.get("decoder_heads", DECODER_HEADS)
+        decoder_dim_head = self.args.get("decoder_dim_head", DECODER_DIM_HEAD)
+
+        self.encoder = encoder
         assert (
-            masking_ratio > 0 and masking_ratio < 1
+            masking_ratio > 0.0 and masking_ratio < 1.0
         ), "masking ratio must be kept between 0 and 1"
         self.masking_ratio = masking_ratio
 
         # extract some hyperparameters and functions from encoder (vision transformer to be trained)
 
-        self.encoder = encoder
-        num_patches, encoder_dim = encoder.pos_embedding.shape[-2:]
-        self.to_patch, self.patch_to_emb = encoder.to_patch_embedding[:2]
+        num_patches, encoder_dim = encoder.embedding.pos_embedding.shape[-2:]
+        self.to_patch, self.patch_to_emb = encoder.embedding.to_patch_embedding[:2]
         pixel_values_per_patch = self.patch_to_emb.weight.shape[-1]
 
         # decoder parameters
@@ -59,7 +66,7 @@ class MAE(nn.Module):
         # patch to encoder tokens and add positions
 
         tokens = self.patch_to_emb(patches)
-        tokens = tokens + self.encoder.pos_embedding[:, :num_patches]
+        tokens = tokens + self.encoder.embedding.pos_embedding[:, :num_patches]
 
         # calculate of patches needed to be masked, and get random indices, dividing it up for mask vs unmasked
 
@@ -81,7 +88,7 @@ class MAE(nn.Module):
 
         # attend with vision transformer
 
-        encoded_tokens = self.encoder.transformer(tokens)
+        encoded_tokens = self.encoder.embedding.transformer(tokens)
 
         # project encoder to decoder dimensions, if they are not equal - the paper says you can get away with a smaller dimension for decoder
 
@@ -106,7 +113,17 @@ class MAE(nn.Module):
         mask_tokens = decoded_tokens[:, :num_masked]
         pred_pixel_values = self.to_pixels(mask_tokens)
 
+        return (pred_pixel_values, masked_patches)
         # calculate reconstruction loss
 
-        recon_loss = F.mse_loss(pred_pixel_values, masked_patches)
-        return recon_loss
+        # recon_loss = F.mse_loss(pred_pixel_values, masked_patches)
+        # return recon_loss
+
+    @staticmethod
+    def add_to_argparse(parser):
+        parser.add_argument("--decoder_dim", type=int, default=DECODER_DIM)
+        parser.add_argument("--masking_ratio", type=float, default=MASKING_RATIO)
+        parser.add_argument("--decoder_depth", type=int, default=DECODER_DEPTH)
+        parser.add_argument("--decoder_heads", type=int, default=DECODER_HEADS)
+        parser.add_argument("--decoder_dim_head", type=int, default=DECODER_DIM_HEAD)
+        return parser
