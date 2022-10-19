@@ -148,14 +148,13 @@ class TransferLearningVIT(nn.Module):
         self.data_config = data_config
         # init a pretrained model
         dim = backbone.model.dim
-        self.feature_extractor = backbone.model.embedding
+        self.embedding = backbone.model.embedding
 
         num_classes = data_config["num_classes"]
         self.linear_head = nn.Sequential(nn.LayerNorm(dim), nn.Linear(dim, num_classes))
 
     def forward(self, x):
-        with torch.no_grad():
-            embeddings = self.feature_extractor(x)
+        embeddings = self.embedding(x)
         return self.linear_head(embeddings)
 
 

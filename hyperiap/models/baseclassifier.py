@@ -6,8 +6,8 @@ from argparse import Namespace
 
 OPTIMIZER = "Adam"
 LR = 1e-3
+T_0 = 2
 LOSS = "cross_entropy"
-ONE_CYCLE_TOTAL_STEPS = 100
 
 
 class BaseClassifier(pl.LightningModule):
@@ -27,10 +27,7 @@ class BaseClassifier(pl.LightningModule):
         if loss not in ("transformer",):
             self.loss_fn = getattr(torch.nn.functional, loss)
 
-        self.one_cycle_max_lr = self.args.get("one_cycle_max_lr", None)
-        self.one_cycle_total_steps = self.args.get(
-            "one_cycle_total_steps", ONE_CYCLE_TOTAL_STEPS
-        )
+        self.T_0 = self.args.get("T_0", T_0)
 
         self.train_acc = Accuracy()
         self.val_acc = Accuracy()
@@ -52,8 +49,8 @@ class BaseClassifier(pl.LightningModule):
         loss = self.loss_fn(logits, y)
         self.train_acc(logits, y)
 
-        self.log("train/loss", loss)
-        self.log("train/acc", self.train_acc, on_step=False, on_epoch=True)
+        self.log("train_loss", loss)
+        self.log("train_acc", self.train_acc, on_step=False, on_epoch=True)
 
         outputs = {"loss": loss}
 
@@ -66,8 +63,8 @@ class BaseClassifier(pl.LightningModule):
         loss = self.loss_fn(logits, y)
         self.val_acc(logits, y)
 
-        self.log("val/loss", loss, prog_bar=True, sync_dist=True)
-        self.log("val/acc", self.val_acc, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val_loss", loss, prog_bar=True, sync_dist=True)
+        self.log("val_acc", self.val_acc, on_step=False, on_epoch=True, prog_bar=True)
 
         outputs = {"loss": loss}
 
@@ -80,23 +77,21 @@ class BaseClassifier(pl.LightningModule):
         loss = self.loss_fn(logits, y)
         self.test_acc(logits, y)
 
-        self.log("test/loss", loss, on_step=False, on_epoch=True)
-        self.log("test/acc", self.test_acc, on_step=False, on_epoch=True)
+        self.log("test_loss", loss, on_step=False, on_epoch=True)
+        self.log("test_acc", self.test_acc, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
-        optimizer = self.optimizer_class(self.parameters(), lr=self.lr)
-        if self.one_cycle_max_lr is None:
-            return optimizer
-        scheduler = torch.optim.lr_scheduler.OneCycleLR(
-            optimizer=optimizer,
-            max_lr=self.one_cycle_max_lr,
-            total_steps=self.one_cycle_total_steps,
+        parameters = filter(lambda x: x.requires_grad, self.parameters())
+        optimizer = self.optimizer_class(parameters, lr=self.lr)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+            optimizer=optimizer, T_0=self.T_0
         )
-        return {
-            "optimizer": optimizer,
-            "lr_scheduler": scheduler,
-            "monitor": "val/loss",
-        }
+        # return {
+        #    "optimizer": optimizer,
+        #    "scheduler": [scheduler],
+        #    "monitor": "val/loss",
+        # }
+        return [optimizer], [scheduler]
 
     @staticmethod
     def add_to_argparse(parser):
@@ -107,10 +102,7 @@ class BaseClassifier(pl.LightningModule):
             help="optimizer class from torch.optim",
         )
         parser.add_argument("--lr", type=float, default=LR)
-        parser.add_argument("--one_cycle_max_lr", type=float, default=None)
-        parser.add_argument(
-            "--one_cycle_total_steps", type=int, default=ONE_CYCLE_TOTAL_STEPS
-        )
+        parser.add_argument("--T_0", type=float, default=T_0)
         parser.add_argument(
             "--loss",
             type=str,
