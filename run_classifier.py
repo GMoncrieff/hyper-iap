@@ -6,7 +6,8 @@ import pytorch_lightning as pl
 import torch
 import numpy as np
 
-from hyperiap.models.baseclassifier import BaseClassifier
+from hyperiap.litmodels.litclassifier import LitClassifier
+from hyperiap.litmodels.litselfsupervised import LitSelfSupervised
 
 DATA_CLASS_MODULE = "hyperiap.datasets"
 MODEL_CLASS_MODULE = "hyperiap.models"
@@ -27,11 +28,13 @@ def import_class(module_and_class_name: str) -> type:
 def setup_data_and_model_from_args(args: Namespace):
     data_class = import_class(f"{DATA_CLASS_MODULE}.{args.data_class}")
     model_class = import_class(f"{MODEL_CLASS_MODULE}.{args.model_class}")
+    selfsup_class = import_class(f"{MODEL_CLASS_MODULE}.{args.ss_model_class}")
 
     data = data_class(args)
     model = model_class(data_config=data.config(), args=args)
+    ssmodel = selfsup_class(encoder=model, args=args)
 
-    return data, model
+    return data, model, ssmodel
 
 
 def _setup_parser():
@@ -99,8 +102,11 @@ def _setup_parser():
     model_group = parser.add_argument_group("Model Args")
     model_class.add_to_argparse(model_group)
 
-    basemodel_group = parser.add_argument_group("BaseModel Args")
-    BaseClassifier.add_to_argparse(basemodel_group)
+    classmodel_group = parser.add_argument_group("LitClassifier Args")
+    LitClassifier.add_to_argparse(classmodel_group)
+
+    selfmodel_group = parser.add_argument_group("LitSelfSupervised Args")
+    LitSelfSupervised.add_to_argparse(selfmodel_group)
 
     parser.add_argument("--help", "-h", action="help")
     return parser
@@ -111,7 +117,7 @@ def cli_main():
      Run an experiment.
      Sample command:
      ```
-    python run_classifier.py --model_class=tempcnn.TEMPCNN --data_class=timeseries_module.TimeSeriesDataModule
+    python run_classifier.py --model_class=vit.VIT --ssmodel_class=mae.MAE --data_class=timeseries_module.TimeSeriesDataModule
      ```
      For basic help documentation, run the command
      ```
@@ -128,19 +134,19 @@ def cli_main():
 
     parser = _setup_parser()
     args = parser.parse_args()
-    data, model = setup_data_and_model_from_args(args)
+    data, model, ssmodel = setup_data_and_model_from_args(args)
 
     # -----------
     # setup model
     # -----------
-    seq_model_class = BaseClassifier
+    model_class = LitClassifier
 
     if args.load_checkpoint is not None:
-        seq_model = seq_model_class.load_from_checkpoint(
+        model = model_class.load_from_checkpoint(
             args.load_checkpoint, args=args, model=model
         )
     else:
-        seq_model = seq_model_class(args=args, model=model)
+        model = model_class(args=args, model=model)
 
     # -----------
     # logging
@@ -163,7 +169,7 @@ def cli_main():
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         save_top_k=1,
         filename="epoch={epoch:04d}-val.loss={val/loss:.3f}-val.acc={val/acc:.3f}",
-        monitor="val/loss",
+        monitor="val_loss",
         mode="min",
         auto_insert_metric_name=False,
         dirpath=experiment_dir,
@@ -176,7 +182,7 @@ def cli_main():
 
     if args.stop_early:
         early_stopping_callback = pl.callbacks.EarlyStopping(
-            monitor="val/loss", mode="min", patience=args.stop_early
+            monitor="val_loss", mode="min", patience=args.stop_early
         )
         callbacks.append(early_stopping_callback)
 
@@ -201,7 +207,7 @@ def cli_main():
 
     # trainer.tune(seq_model, datamodule=data)  # If passing --auto_lr_find, this will set learning rate
 
-    trainer.fit(seq_model, datamodule=data)
+    trainer.fit(model, datamodule=data)
 
     trainer.profiler = (
         pl.profiler.PassThroughProfiler()
@@ -210,12 +216,12 @@ def cli_main():
     best_model_path = checkpoint_callback.best_model_path
     if best_model_path:
         f"Best model saved at: {best_model_path}"
-        # Hide lines below until Lab 04
+
         if args.wandb:
             "Best model also uploaded to W&B"
         trainer.test(datamodule=data, ckpt_path=best_model_path)
     else:
-        trainer.test(seq_model, datamodule=data)
+        trainer.test(model, datamodule=data)
 
 
 if __name__ == "__main__":

@@ -1,31 +1,27 @@
 import torch
-import pytorch_lightning as pl
 from torchmetrics import Accuracy
 
 from argparse import Namespace
 
-OPTIMIZER = "Adam"
+from hyperiap.litmodels.litbasemodel import LitBaseModel
+
 LR = 1e-3
 T_0 = 2
 LOSS = "cross_entropy"
 
 
-class BaseClassifier(pl.LightningModule):
+class LitClassifier(LitBaseModel):
     def __init__(self, model, args: Namespace = None):
-        super().__init__()
+        super().__init__(args)
         self.model = model
         self.args = vars(args) if args is not None else {}
 
         self.data_config = self.model.data_config
 
-        optimizer = self.args.get("optimizer", OPTIMIZER)
-        self.optimizer_class = getattr(torch.optim, optimizer)
-
         self.lr = self.args.get("lr", LR)
 
         loss = self.args.get("loss", LOSS)
-        if loss not in ("transformer",):
-            self.loss_fn = getattr(torch.nn.functional, loss)
+        self.loss_fn = getattr(torch.nn.functional, loss)
 
         self.T_0 = self.args.get("T_0", T_0)
 
@@ -80,27 +76,9 @@ class BaseClassifier(pl.LightningModule):
         self.log("test_loss", loss, on_step=False, on_epoch=True)
         self.log("test_acc", self.test_acc, on_step=False, on_epoch=True)
 
-    def configure_optimizers(self):
-        parameters = filter(lambda x: x.requires_grad, self.parameters())
-        optimizer = self.optimizer_class(parameters, lr=self.lr)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
-            optimizer=optimizer, T_0=self.T_0
-        )
-        # return {
-        #    "optimizer": optimizer,
-        #    "scheduler": [scheduler],
-        #    "monitor": "val/loss",
-        # }
-        return [optimizer], [scheduler]
-
     @staticmethod
     def add_to_argparse(parser):
-        parser.add_argument(
-            "--optimizer",
-            type=str,
-            default=OPTIMIZER,
-            help="optimizer class from torch.optim",
-        )
+        LitBaseModel.add_to_argparse(parser)
         parser.add_argument("--lr", type=float, default=LR)
         parser.add_argument("--T_0", type=float, default=T_0)
         parser.add_argument(

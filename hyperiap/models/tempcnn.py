@@ -10,7 +10,7 @@ INPUT_DIM = 27
 NUM_CLASSES = 2
 SEQ_LEN = 500
 KERNEL_SIZE = 5
-HIDDEN = 24
+HIDDEN = 12
 DROPOUT = 0.2
 
 
@@ -135,12 +135,11 @@ class TransferLearningTempCNN(nn.Module):
         self.data_config = data_config
         # init a pretrained model
         num_filters = backbone.model.out.in_features
-        self.feature_extractor = backbone.model.extractor
+        self.extractor = backbone.model.extractor
 
         num_target_classes = data_config["num_classes"]
         self.classifier = nn.Linear(num_filters, num_target_classes)
 
     def forward(self, x):
-        with torch.no_grad():
-            embeddings = self.feature_extractor(x)
+        embeddings = self.extractor(x)
         return self.classifier(embeddings)

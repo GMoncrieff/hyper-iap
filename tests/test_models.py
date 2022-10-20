@@ -1,13 +1,13 @@
 from hyperiap.models.tempcnn import TEMPCNN
 from hyperiap.models.vit import simpleVIT
 from hyperiap.models.mae import MAE
-from hyperiap.models.baseclassifier import BaseClassifier
+from hyperiap.litmodels.litclassifier import LitClassifier
 import torch
 
 
 def test_tempcnn():
 
-    model = BaseClassifier(
+    model = LitClassifier(
         TEMPCNN(data_config={"num_classes": 5, "num_bands": 10, "num_dim": 4})
     )
 
@@ -21,7 +21,7 @@ def test_tempcnn():
 
 def test_vit():
 
-    model = BaseClassifier(
+    model = LitClassifier(
         simpleVIT(data_config={"num_classes": 5, "num_bands": 10, "num_dim": 4})
     )
 
@@ -37,16 +37,10 @@ def test_mae():
 
     v = simpleVIT(data_config={"num_classes": 5, "num_bands": 10, "num_dim": 4})
 
-    mae = MAE(
-        encoder=v,
-        masking_ratio=0.75,  # the paper recommended 75% masked patches
-        decoder_dim=512,  # paper showed good results with just 512
-        decoder_depth=6,  # anywhere from 1 to 8
-    )
+    mae = MAE(encoder=v)
 
     nrand = torch.randn(1, 10, 4, 20)
 
-    loss = mae(nrand)
+    pixel, mask = mae(nrand)
 
-    assert len(loss.shape) == 0
-    assert isinstance(loss, torch.Tensor)
+    assert pixel.shape == mask.shape

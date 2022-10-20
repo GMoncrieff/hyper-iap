@@ -147,8 +147,8 @@ class TransferLearningVIT(nn.Module):
         super().__init__()
         self.data_config = data_config
         # init a pretrained model
-        dim = backbone.model.dim
-        self.embedding = backbone.model.embedding
+        dim = backbone.dim
+        self.embedding = backbone.embedding
 
         num_classes = data_config["num_classes"]
         self.linear_head = nn.Sequential(nn.LayerNorm(dim), nn.Linear(dim, num_classes))

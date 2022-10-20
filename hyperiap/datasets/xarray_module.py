@@ -40,6 +40,13 @@ class XarrayDataModule(BaseDataModule):
 
     def prepare_data(self, *args, **kwargs) -> None:
         """download data here"""
+
+    def setup(self, stage: Optional[str] = None):
+        """
+        Read downloaded data
+        Setup Datasets
+        Split the dataset into train/val/test."""
+
         # create paths and filenames
         parent = dirname(abspath("__file__"))
         self.full_path = parent + PROCESSED_DATA_DIRNAME
@@ -72,12 +79,6 @@ class XarrayDataModule(BaseDataModule):
         # input_dims = {WLDIM: N_BAND,ZDIM:N_DIM,'batch':BATCH_SIZE},
         # concat_input_dims=False,
         # preload_batch=True)
-
-    def setup(self, stage: Optional[str] = None):
-        """
-        Read downloaded data
-        Setup Datasets
-        Split the dataset into train/val/test."""
 
         traindata = MapDataset(self.batch_gen_train)
         # self.data_test=traindata = MapDataset(self.batch_gen_test)
