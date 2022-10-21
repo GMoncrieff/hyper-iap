@@ -6,8 +6,8 @@ import pytorch_lightning as pl
 import torch
 import numpy as np
 
+from hyperiap.litmodels.litselfsupervised import LitSelfSupervised
 from hyperiap.litmodels.litclassifier import LitClassifier
-from finetuning_scheduler import FinetuningScheduler
 
 DATA_CLASS_MODULE = "hyperiap.datasets"
 MODEL_CLASS_MODULE = "hyperiap.models"
@@ -28,19 +28,13 @@ def import_class(module_and_class_name: str) -> type:
 def setup_data_and_model_from_args(args: Namespace):
     data_class = import_class(f"{DATA_CLASS_MODULE}.{args.data_class}")
     model_class = import_class(f"{MODEL_CLASS_MODULE}.{args.model_class}")
+    ssmodel_class = import_class(f"{MODEL_CLASS_MODULE}.{args.ssmodel_class}")
 
     data = data_class(args)
     model = model_class(data_config=data.config(), args=args)
+    ssmodel = ssmodel_class(encoder=model, args=args)
 
-    return data, model
-
-
-def setup_transfer_from_args(args: Namespace, model: torch.nn.Module, data):
-    transfer_class = import_class(f"{MODEL_CLASS_MODULE}.{args.transfer_class}")
-
-    transfer = transfer_class(model, data_config=data.config())
-
-    return transfer
+    return data, model, ssmodel
 
 
 def _setup_parser():
@@ -67,13 +61,6 @@ def _setup_parser():
         default=False,
         help="If passed, uses the PyTorch Profiler to track computation, exported as a Chrome-style trace.",
     )
-    # finetune
-    parser.add_argument(
-        "--finetune",
-        action="store_true",
-        default=False,
-        help="If passed, uses transfer learning to fine tune model",
-    )
     # select data class
     parser.add_argument(
         "--data_class",
@@ -86,14 +73,14 @@ def _setup_parser():
         "--model_class",
         type=str,
         default="vit.simpleVIT",
-        help=f"String identifier for the model class, relative to {MODEL_CLASS_MODULE}.",
+        help=f"String identifier for the encoder model class, relative to {MODEL_CLASS_MODULE}.",
     )
-    # select transfer class
+    # select selfsupervised class
     parser.add_argument(
-        "--transfer_class",
+        "--ssmodel_class",
         type=str,
-        default="vit.TransferLearningVIT",
-        help=f"String identifier for the transfer model class, relative to {MODEL_CLASS_MODULE}.",
+        default="mae.MAE",
+        help=f"String identifier for the selfsup model class, relative to {MODEL_CLASS_MODULE}.",
     )
     # load from checkpoint
     parser.add_argument(
@@ -102,13 +89,12 @@ def _setup_parser():
         default=None,
         help="If passed, loads a model from the provided path. Must be provided when finetuning",
     )
-    # load ft shceudle
-    # "hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml"
+    # save classifier
     parser.add_argument(
-        "--ft_schedule",
-        type=str,
-        default=None,
-        help="path to schedule for finetuing",
+        "--save_classifier",
+        action="store_true",
+        default=True,
+        help="If passed, will save the encoder state of best model as a pl classifier.",
     )
     # early stopping
     parser.add_argument(
@@ -122,6 +108,7 @@ def _setup_parser():
     temp_args, _ = parser.parse_known_args()
     data_class = import_class(f"{DATA_CLASS_MODULE}.{temp_args.data_class}")
     model_class = import_class(f"{MODEL_CLASS_MODULE}.{temp_args.model_class}")
+    ssmodel_class = import_class(f"{MODEL_CLASS_MODULE}.{temp_args.ssmodel_class}")
 
     # Get data, model
     data_group = parser.add_argument_group("Data Args")
@@ -130,8 +117,11 @@ def _setup_parser():
     model_group = parser.add_argument_group("Model Args")
     model_class.add_to_argparse(model_group)
 
+    ssmodel_group = parser.add_argument_group("Self-Sup model Args")
+    ssmodel_class.add_to_argparse(ssmodel_group)
+
     litmodel_group = parser.add_argument_group("LitModel Args")
-    LitClassifier.add_to_argparse(litmodel_group)
+    LitSelfSupervised.add_to_argparse(litmodel_group)
 
     parser.add_argument("--help", "-h", action="help")
     return parser
@@ -142,7 +132,7 @@ def main():
      Run an experiment.
      Sample command:
      ```
-    python run_classifier.py --model_class=vit.simpleVIT --data_class=xarray_module.XarrayDataModule
+     python run_selfsupervised.py --model_class=vit.simpleVIT --ssmodel_class=mae.MAE --data_class=xarray_module.XarrayDataModule
      ```
      For basic help documentation, run the command
      ```
@@ -153,50 +143,35 @@ def main():
      To see which command line args are available and read their documentation
      provide values for those arguments before invoking --help, like so:
      ```
-     python run_classifier.py --model_class=vit.simpleVIT --data_class=xarray_module.XarrayDataModule --help
-     python run_classifier.py \
-            --model_class=vit.simpleVIT \
+     python run_selfsupervised.py --model_class=vit.simpleVIT --ssmodel_class=mae.MAE --data_class=xarray_module.XarrayDataModule --help
+     python run_selfsupervised.py --model_class=vit.simpleVIT \
+            --ssmodel_class=mae.MAE \
+            --save_classifier \
             --data_class=xarray_module.XarrayDataModule \
-            --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5
-     python run_classifier.py --model_class=vit.simpleVIT \
-            --data_class=xarray_module.XarrayDataModule \
-            --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5 \
-            --finetune \
-            --load_checkpoint=training/logs/lightning_logs/version_4/epoch=0004-val.loss=0.029-val.acc=1.000.ckpt \
-            --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml
+            --limit_val_batches=5 --limit_train_batches=10 --max_epochs=3
     """
     pl.seed_everything(1234)
 
     parser = _setup_parser()
     args = parser.parse_args()
-    data, model = setup_data_and_model_from_args(args)
+    data, model, ssmodel = setup_data_and_model_from_args(args)
 
     # -----------
     # setup model
     # -----------
-    seq_model_class = LitClassifier
-
-    if args.finetune and (args.load_checkpoint is None):
-        raise ValueError("Must provide a checkpoint when finetuning")
-    if args.finetune and (args.ft_schedule is None):
-        raise ValueError("Must provide a schedule when finetuning")
+    seq_model_class = LitSelfSupervised
 
     if args.load_checkpoint is not None:
         seq_model = seq_model_class.load_from_checkpoint(
-            args.load_checkpoint, args=args, model=model
+            args.load_checkpoint, args=args, model=ssmodel
         )
-        if args.finetune:
-            transfer = setup_transfer_from_args(args, seq_model.model, data)
-            # transfer = setup_transfer_from_args(args,model,data)
-            seq_model = seq_model_class(args=args, model=transfer)
-
     else:
-        seq_model = seq_model_class(args=args, model=model)
+        seq_model = seq_model_class(args=args, model=ssmodel)
 
     # -----------
     # logging
     # -----------
-    log_dir = Path("training") / "logs"
+    log_dir = Path("training") / "ss_logs"
     Path(log_dir).mkdir(parents=True, exist_ok=True)
     logger = pl.loggers.TensorBoardLogger(log_dir)
     experiment_dir = logger.log_dir
@@ -229,11 +204,6 @@ def main():
             monitor="val_loss", mode="min", patience=args.stop_early
         )
         callbacks.append(early_stopping_callback)
-
-    if args.finetune:
-        ft_callback = FinetuningScheduler(ft_schedule=args.ft_schedule)
-        callbacks.append(ft_callback)
-
     # -----------
     # profiling
     # -----------
@@ -250,7 +220,14 @@ def main():
     # training
     # -----------
 
-    trainer = pl.Trainer.from_argparse_args(args, callbacks=callbacks, logger=logger)
+    # trainer = pl.Trainer.from_argparse_args(args, callbacks=callbacks, logger=logger)
+    trainer = pl.Trainer(
+        limit_train_batches=5,
+        limit_val_batches=2,
+        max_epochs=2,
+        callbacks=callbacks,
+        logger=logger,
+    )
     trainer.profiler = profiler
 
     trainer.fit(seq_model, datamodule=data)
@@ -263,6 +240,18 @@ def main():
     f"Best model saved at: {best_model_path}"
     if args.wandb:
         "Best model also uploaded to W&B"
+
+    if args.save_classifier:
+        seq_model = seq_model_class.load_from_checkpoint(
+            best_model_path, args=args, model=ssmodel
+        )
+        # junk to allow us to save model in a form that classifier can load
+        litclass = LitClassifier(seq_model.model.encoder)
+        trainer = pl.Trainer(
+            limit_val_batches=0, enable_checkpointing=False, logger=False
+        )
+        trainer.validate(litclass, datamodule=data)
+        trainer.save_checkpoint(experiment_dir + "/ss_classifier.ckpt")
 
     # trainer.test(seq_model, datamodule=data)
 
