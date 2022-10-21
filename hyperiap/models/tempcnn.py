@@ -10,27 +10,20 @@ INPUT_DIM = 27
 NUM_CLASSES = 2
 SEQ_LEN = 500
 KERNEL_SIZE = 5
-HIDDEN = 24
+HIDDEN = 12
 DROPOUT = 0.2
 
 
-class TEMPCNN(torch.nn.Module):
-    def __init__(
-        self,
-        data_config: Dict[str, Any],
-        args: Namespace = None,
-    ) -> None:
+class TEMPCNNextractor(torch.nn.Module):
+    def __init__(self, kernel_size, hidden, dropout, seq_len, input_dim) -> None:
         super().__init__()
-        self.args = vars(args) if args is not None else {}
-        self.data_config = data_config
         # model params
-        self.kernel_size = self.args.get("kernel_size", KERNEL_SIZE)
-        self.hidden = self.args.get("hidden_dim", HIDDEN)
-        self.dropout = self.args.get("dropout", DROPOUT)
+        self.kernel_size = kernel_size
+        self.hidden = hidden
+        self.dropout = dropout
         # data params
-        self.num_classes = data_config["num_classes"]
-        self.seq_len = data_config["num_bands"]
-        self.input_dim = data_config["num_dim"]
+        self.seq_len = seq_len
+        self.input_dim = input_dim
 
         self.conv_bn_relu1 = Conv1D_BatchNorm_Relu_Dropout(
             self.input_dim,
@@ -54,7 +47,6 @@ class TEMPCNN(torch.nn.Module):
         self.dense = FC_BatchNorm_Relu_Dropout(
             self.hidden * self.seq_len, 4 * self.hidden, drop_probability=self.dropout
         )
-        self.out = nn.Linear(4 * self.hidden, self.num_classes)
 
     def forward(self, x):
         x = rearrange(x, "s t c b -> (s b) c t", s=1)
@@ -62,7 +54,34 @@ class TEMPCNN(torch.nn.Module):
         x = self.conv_bn_relu2(x)
         x = self.conv_bn_relu3(x)
         x = self.flatten(x)
-        x = self.dense(x)
+        return self.dense(x)
+
+
+class TEMPCNN(torch.nn.Module):
+    def __init__(
+        self,
+        data_config: Dict[str, Any],
+        args: Namespace = None,
+    ) -> None:
+        super().__init__()
+        self.args = vars(args) if args is not None else {}
+        self.data_config = data_config
+        # model params
+        self.kernel_size = self.args.get("kernel_size", KERNEL_SIZE)
+        self.hidden = self.args.get("hidden_dim", HIDDEN)
+        self.dropout = self.args.get("dropout", DROPOUT)
+        # data params
+        self.num_classes = data_config["num_classes"]
+        self.seq_len = data_config["num_bands"]
+        self.input_dim = data_config["num_dim"]
+
+        self.extractor = TEMPCNNextractor(
+            self.kernel_size, self.hidden, self.dropout, self.seq_len, self.input_dim
+        )
+        self.out = nn.Linear(4 * self.hidden, self.num_classes)
+
+    def forward(self, x):
+        x = self.extractor(x)
         return self.out(x)
 
     @staticmethod
@@ -108,3 +127,19 @@ class FC_BatchNorm_Relu_Dropout(torch.nn.Module):
 class Flatten(nn.Module):
     def forward(self, input):
         return input.view(input.size(0), -1)
+
+
+class TransferLearningTempCNN(nn.Module):
+    def __init__(self, backbone, data_config):
+        super().__init__()
+        self.data_config = data_config
+        # init a pretrained model
+        num_filters = backbone.model.out.in_features
+        self.extractor = backbone.model.extractor
+
+        num_target_classes = data_config["num_classes"]
+        self.classifier = nn.Linear(num_filters, num_target_classes)
+
+    def forward(self, x):
+        embeddings = self.extractor(x)
+        return self.classifier(embeddings)
