@@ -44,6 +44,7 @@ executing==1.1.0
 fasteners==0.18
 filelock==3.8.0
 findlibs==0.0.2
+finetuning-scheduler
 flake8==5.0.4
 frozenlist==1.3.1
 fsspec==2022.8.2
