@@ -23,7 +23,7 @@ ds_gcs = xr.open_dataset(
 )
 # rename vars and set crs
 ds_gcs = ds_gcs.rename({"X": "x", "Y": "y"})
-ds_gcs = ds_gcs.rio.set_crs("EPSG:32734")
+ds_gcs.rio.write_crs("EPSG:32734", inplace=True)
 
 # open dict with band wls
 with urllib.request.urlopen(
