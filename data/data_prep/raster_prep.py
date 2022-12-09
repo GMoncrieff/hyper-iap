@@ -31,6 +31,14 @@ wl_bands = list(dsx.data_vars)
 dsx = dsx[wl_bands].to_array(dim="wl")
 dsx = dsx.sortby("wl")
 
+# drop bad bands
+dsx = dsx.where(
+    ((dsx.wl > 0.400) & (dsx.wl < 1.340))
+    | ((dsx.wl > 1.455) & (dsx.wl < 1.790))
+    | ((dsx.wl > 1.955) & (dsx.wl < 2.400)),
+    drop=True,
+)
+
 # write crs
 dsx.rio.write_crs("EPSG:32734", inplace=True)
 # bb = minx, miny, maxx, maxy
