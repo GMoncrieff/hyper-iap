@@ -41,6 +41,8 @@ class LitClassifier(LitBaseModel):
     def training_step(self, batch, batch_idx):
         x, y = batch
         y = y.squeeze()
+        x = x.squeeze()
+
         logits = self(x)
         loss = self.loss_fn(logits, y)
         self.train_acc(logits, y)
@@ -55,6 +57,8 @@ class LitClassifier(LitBaseModel):
     def validation_step(self, batch, batch_idx):
         x, y = batch
         y = y.squeeze()
+        x = x.squeeze()
+
         logits = self(x)
         loss = self.loss_fn(logits, y)
         self.val_acc(logits, y)
@@ -69,6 +73,8 @@ class LitClassifier(LitBaseModel):
     def test_step(self, batch, batch_idx):
         x, y = batch
         y = y.squeeze()
+        x = x.squeeze()
+
         logits = self(x)
         loss = self.loss_fn(logits, y)
         self.test_acc(logits, y)

@@ -57,7 +57,7 @@ points = points[~points["class"].isin(["rock", "shade", "Pine"])]
 
 # encode code column
 le = LabelEncoder()
-points["recode"] = le.fit_transform(points["code"])
+points["label"] = le.fit_transform(points["class"])
 
 # get neighbour pixels
 #####################
@@ -83,12 +83,12 @@ y_indexer = xr.DataArray(ydims, dims=["z", "index"])
 xdp = dsx.sel(x=x_indexer, y=y_indexer, method="nearest").load()
 
 # add label column
-points = points["recode"].to_xarray()
+points = points["label"].to_xarray()
 xdp = xdp.merge(points)
 
 # write data
 xdp.to_zarr(
-    "gcs://fran-share/fran_pixsample.zarr",
+    "gcs://fran-share/fran_pixelsample.zarr",
     consolidated=True,
     storage_options={"project": "science-sharing", "token": "anon"},
 )
