@@ -5,6 +5,7 @@ from hyperiap.datasets.base_module import BaseDataModule
 from typing import Optional
 
 import numpy as np
+import math
 from os.path import dirname, abspath
 
 import xarray as xr
@@ -13,13 +14,16 @@ import xbatcher
 BATCH_SIZE = 128
 
 SPLIT = 0.2
-N_CLASS = 10
+N_CLASS = 53
 N_BAND = 267
-N_DIM = 9
+SP_SHIFT = 3
+N_DIM = SP_SHIFT**2
+SHIFT = 1
+BDIM = (((math.sqrt(BATCH_SIZE) - 1) / 1) * SHIFT) + SP_SHIFT
 
-PROCESSED_TRAIN_DATA = "gcs://fran-share/fran_pixsample.zarr"
-PROCESSED_TEST_DATA = "gcs://fran-share/fran_pixsample.zarr"
-WLDIM, ZDIM, BATCHDIM = "wl", "z", "index"
+PROCESSED_TRAIN_DATA = "gcs://fran-share/fran_torch.zarr"
+PROCESSED_TEST_DATA = "gcs://fran-share/fran_torch.zarr"
+XDIM, YDIM, WLDIM = "x", "y", "wl"
 
 
 class XarrayDataModule(BaseDataModule):
@@ -69,8 +73,9 @@ class XarrayDataModule(BaseDataModule):
 
         self.batch_gen_train = xbatcher.BatchGenerator(
             traindata,
-            input_dims={BATCHDIM: 1, WLDIM: N_BAND, ZDIM: N_DIM},
-            batch_dims={BATCHDIM: BATCH_SIZE},
+            input_dims={XDIM: SP_SHIFT, YDIM: SP_SHIFT, WLDIM: N_BAND},
+            batch_dims={XDIM: BDIM, XDIM: BDIM},
+            input_overlap={XDIM: SP_SHIFT - SHIFT, YDIM: SP_SHIFT - SHIFT},
             concat_input_dims=True,
             preload_batch=False,
         )
