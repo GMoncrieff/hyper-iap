@@ -78,7 +78,7 @@ ds_join = ds_join.chunk({"x": 1000, "y": 1000})
 
 # write
 ds_join.to_zarr(
-    "gcs://fran-share/fran_pytorch.zarr",
+    "gcs://fran-share/fran_torch.zarr",
     consolidated=True,
     storage_options={"project": "science-sharing", "token": "anon"},
 )

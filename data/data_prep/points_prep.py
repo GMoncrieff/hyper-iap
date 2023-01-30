@@ -88,7 +88,7 @@ xdp = xdp.merge(points)
 
 # write data
 xdp.to_zarr(
-    "gcs://fran-share/fran_pixelsample.zarr",
+    "gcs://fran-share/fran_pixsample.zarr",
     consolidated=True,
     storage_options={"project": "science-sharing", "token": "anon"},
 )
