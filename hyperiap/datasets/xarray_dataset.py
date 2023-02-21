@@ -4,7 +4,7 @@ from typing import Any, Callable, Optional, Tuple
 import torch
 
 PREDICTOR_VAR = "reflectance"
-LABEL_VAR = "land_cover"
+LABEL_VAR = "label"
 
 
 class MapDataset(torch.utils.data.Dataset):
@@ -43,8 +43,10 @@ class MapDataset(torch.utils.data.Dataset):
 
         # TODO: figure out the dataset -> array workflow
         # currently hardcoding a variable name
-        x_batch = self.X_generator[idx][PREDICTOR_VAR].torch.to_tensor()
-        y_batch = self.X_generator[idx][LABEL_VAR].torch.to_tensor().type(torch.int64)
+        x_batch = self.X_generator[idx][PREDICTOR_VAR].load().torch.to_tensor()
+        y_batch = (
+            self.X_generator[idx][LABEL_VAR].load().torch.to_tensor().type(torch.int64)
+        )
 
         if self.transform:
             x_batch = self.transform(x_batch)

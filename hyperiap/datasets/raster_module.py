@@ -11,15 +11,25 @@ from os.path import dirname, abspath
 import xarray as xr
 import xbatcher
 
-BATCH_SIZE = 128
+BATCH_SIZE = 900
+N_DIM = 9
 
 SPLIT = 0.2
 N_CLASS = 53
 N_BAND = 267
-SP_SHIFT = 3
-N_DIM = SP_SHIFT**2
-SHIFT = 1
-BDIM = (((math.sqrt(BATCH_SIZE) - 1) / 1) * SHIFT) + SP_SHIFT
+BDIM = math.sqrt(BATCH_SIZE)
+ZDIM = math.sqrt(N_DIM)
+
+if BDIM % 1 != 0:
+    raise Exception("Batch size must be a perfect square")
+else:
+    BDIM = int(BDIM)
+
+if ZDIM % 1 != 0:
+    raise Exception("z size must be a perfect square")
+else:
+    ZDIM = int(ZDIM)
+
 
 PROCESSED_TRAIN_DATA = "gcs://fran-share/fran_torch.zarr"
 PROCESSED_TEST_DATA = "gcs://fran-share/fran_torch.zarr"
@@ -73,12 +83,13 @@ class XarrayDataModule(BaseDataModule):
 
         self.batch_gen_train = xbatcher.BatchGenerator(
             traindata,
-            input_dims={XDIM: SP_SHIFT, YDIM: SP_SHIFT, WLDIM: N_BAND},
-            batch_dims={XDIM: BDIM, XDIM: BDIM},
-            input_overlap={XDIM: SP_SHIFT - SHIFT, YDIM: SP_SHIFT - SHIFT},
+            input_dims={XDIM: ZDIM, YDIM: ZDIM, WLDIM: N_BAND},
+            batch_dims={XDIM: BDIM, YDIM: BDIM, WLDIM: N_BAND},
+            # input_overlap={XDIM: ZDIM-1, YDIM: ZDIM-1},
             concat_input_dims=True,
             preload_batch=False,
         )
+
         # self.batch_gen_test = xbatcher.BatchGenerator(
         # testdata,
         # input_dims = {WLDIM: N_BAND,ZDIM:N_DIM,'batch':BATCH_SIZE},
