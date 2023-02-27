@@ -1,6 +1,6 @@
 from argparse import Namespace
 from torch.utils.data import random_split
-from hyperiap.datasets.xarray_dataset import MapDataset
+from hyperiap.datasets.xarray_dataset import XarrayDataset
 from hyperiap.datasets.base_module import BaseDataModule
 from typing import Optional
 
@@ -8,31 +8,31 @@ import numpy as np
 from os.path import dirname, abspath
 
 import xarray as xr
-import xbatcher
-
-BATCH_SIZE = 128
 
 SPLIT = 0.2
-N_CLASS = 5
+N_CLASS = 52
 N_BAND = 322
 N_DIM = 9
+BATCH_SIZE = 8
 
-PROCESSED_DATA_DIRNAME = "/data"
-PROCESSED_TRAIN_DATA_FILENAME = "demo_xarray.zarr"
-PROCESSED_TEST_DATA_FILENAME = "demo_xarray__test.zarr"
-XDIM, YDIM, WLDIM, ZDIM = "x", "y", "wl", "z"
+PROCESSED_PROJECT = "science-sharing"
+# PROCESSED_TRAIN_PATH = "gcs://fran-share/clean_batched_torch.zarr"
+PROCESSED_TRAIN_PATH = "data/test_batched_torch.zarr"
+
+XDIM, YDIM, WLDIM, BATCHDIM = "x_batch", "y_batch", "wl", "input_batch"
+CHUNKS = {XDIM: -1, YDIM: -1, WLDIM: -1, BATCHDIM: 10000}
 
 
 class XarrayDataModule(BaseDataModule):
-    """lightning data module for xaray data"""
+    """lightning data module for xarray data"""
 
     def __init__(self, args: Namespace = None) -> None:
         super().__init__(args)
-        self.batch_size = self.args.get("batch_size", BATCH_SIZE)
         self.split = self.args.get("split", SPLIT)
         self.num_classes = N_CLASS
         self.num_bands = N_BAND
         self.num_dim = N_DIM
+        self.batch_size = self.args.get("batch_size", BATCH_SIZE)
 
         self.data_train = None
         self.data_test = None
@@ -43,20 +43,15 @@ class XarrayDataModule(BaseDataModule):
 
     def setup(self, stage: Optional[str] = None):
         """
-        Read downloaded data
+        Read data from cloud storage
         Setup Datasets
         Split the dataset into train/val/test."""
 
-        # create paths and filenames
-        parent = dirname(abspath("__file__"))
-        self.full_path = parent + PROCESSED_DATA_DIRNAME
-
-        self.full_test_file = self.full_path + "/" + PROCESSED_TEST_DATA_FILENAME
-        self.full_train_file = self.full_path + "/" + PROCESSED_TRAIN_DATA_FILENAME
-
         # load data
         try:
-            traindata = xr.open_zarr(self.full_train_file)
+            # self.batch_gen_train = xr.open_dataset(PROCESSED_TRAIN_PATH,chunks=CHUNKS,
+            #   backend_kwargs={"storage_options": {"project": PROCESSED_PROJECT, "token": 'anon'}},engine="zarr")
+            self.batch_gen_train = xr.open_dataset(PROCESSED_TRAIN_PATH, chunks=CHUNKS)
         except FileNotFoundError:
             print(f"Train data file {self.full_train_file} not found")
 
@@ -65,25 +60,13 @@ class XarrayDataModule(BaseDataModule):
         # except FileNotFoundError:
         #    print(f'Test data file {self.full_test_file} not found')
 
-        traindata = traindata.stack(batch=(XDIM, YDIM))
-        # testdata = testdata.stack(batch=(XDIM, YDIM))
+        dataset_size = (self.batch_gen_train.dims[BATCHDIM] // CHUNKS[BATCHDIM]) - 1
 
-        self.batch_gen_train = xbatcher.BatchGenerator(
-            traindata,
-            input_dims={WLDIM: N_BAND, ZDIM: N_DIM, "batch": BATCH_SIZE},
-            concat_input_dims=False,
-            preload_batch=True,
+        traindata = XarrayDataset(
+            self.batch_gen_train, BATCHDIM, dataset_size, CHUNKS[BATCHDIM]
         )
-        # self.batch_gen_test = xbatcher.BatchGenerator(
-        # testdata,
-        # input_dims = {WLDIM: N_BAND,ZDIM:N_DIM,'batch':BATCH_SIZE},
-        # concat_input_dims=False,
-        # preload_batch=True)
+        # self.data_test=traindata = XarrayDataset(self.batch_gen_test)
 
-        traindata = MapDataset(self.batch_gen_train)
-        # self.data_test=traindata = MapDataset(self.batch_gen_test)
-
-        dataset_size = len(traindata)
         split = int(np.floor(self.split * dataset_size))
 
         self.data_train, self.data_val = random_split(

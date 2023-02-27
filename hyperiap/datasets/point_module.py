@@ -1,28 +1,27 @@
 from argparse import Namespace
 from torch.utils.data import random_split
-from hyperiap.datasets.xarray_dataset import MapDataset
+from hyperiap.datasets.point_dataset import PointDataset
 from hyperiap.datasets.base_module import BaseDataModule
 from typing import Optional
 
 import numpy as np
-from os.path import dirname, abspath
-
 import xarray as xr
-import xbatcher
 
 BATCH_SIZE = 128
 
 SPLIT = 0.2
-N_CLASS = 10
+N_CLASS = 13
 N_BAND = 267
 N_DIM = 9
 
-PROCESSED_TRAIN_DATA = "gcs://fran-share/fran_pixsample.zarr"
-PROCESSED_TEST_DATA = "gcs://fran-share/fran_pixsample.zarr"
+# PROCESSED_TRAIN_DATA = "gcs://fran-share/fran_pixsample.zarr"
+# PROCESSED_TEST_DATA = "gcs://fran-share/fran_pixsample.zarr"
+PROCESSED_TRAIN_DATA = "data/fran_pixsample.zarr"
+# PROCESSED_TEST_DATA = "data/fran_pixsample.zarr"
 WLDIM, ZDIM, BATCHDIM = "wl", "z", "index"
 
 
-class XarrayDataModule(BaseDataModule):
+class PointDataModule(BaseDataModule):
     """lightning data module for xarray point data"""
 
     def __init__(self, args: Namespace = None) -> None:
@@ -48,14 +47,13 @@ class XarrayDataModule(BaseDataModule):
 
         # load data
         try:
-            traindata = xr.open_dataset(
-                PROCESSED_TRAIN_DATA,
-                chunks="auto",
-                backend_kwargs={
-                    "storage_options": {"project": "science-sharing", "token": "anon"}
-                },
-                engine="zarr",
-            )
+            # self.batch_gen_train = xr.open_dataset(
+            #    PROCESSED_TRAIN_DATA,
+            #    chunks="auto",
+            #    backend_kwargs={"storage_options": {"project": "science-sharing", "token": "anon"}},
+            #    engine="zarr",
+            # )
+            self.batch_gen_train = xr.open_dataset(PROCESSED_TRAIN_DATA, chunks="auto")
         except FileNotFoundError:
             print(f"Train data file {self.full_train_file} not found")
 
@@ -64,26 +62,11 @@ class XarrayDataModule(BaseDataModule):
         # except FileNotFoundError:
         #    print(f'Test data file {self.full_test_file} not found')
 
-        # traindata = traindata.stack(batch=(XDIM, YDIM))
-        # testdata = testdata.stack(batch=(XDIM, YDIM))
+        dataset_size = self.batch_gen_train.dims[BATCHDIM]
 
-        self.batch_gen_train = xbatcher.BatchGenerator(
-            traindata,
-            input_dims={BATCHDIM: 1, WLDIM: N_BAND, ZDIM: N_DIM},
-            batch_dims={BATCHDIM: BATCH_SIZE},
-            concat_input_dims=True,
-            preload_batch=False,
-        )
-        # self.batch_gen_test = xbatcher.BatchGenerator(
-        # testdata,
-        # input_dims = {WLDIM: N_BAND,ZDIM:N_DIM,'batch':BATCH_SIZE},
-        # concat_input_dims=False,
-        # preload_batch=True)
+        traindata = PointDataset(self.batch_gen_train, BATCHDIM, dataset_size)
+        # self.data_test=traindata = XarrayDataset(self.batch_gen_test)
 
-        traindata = MapDataset(self.batch_gen_train)
-        # self.data_test=traindata = MapDataset(self.batch_gen_test)
-
-        dataset_size = len(traindata)
         split = int(np.floor(self.split * dataset_size))
 
         self.data_train, self.data_val = random_split(

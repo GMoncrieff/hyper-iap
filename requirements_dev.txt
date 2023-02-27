@@ -9,5 +9,12 @@ requests
 torchmetrics
 urllib3
 xbatcher
-xarray[io]
+rioxarray
+gcsfs
+zarr
+xarray[complete]
 dask[complete]
+ipytree
+geopandas
+finetuning-scheduler
+dask-ml

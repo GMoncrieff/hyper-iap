@@ -39,8 +39,10 @@ tests/save_dir
 tests/tests_tt_dir/
 processed/
 raw/
+hyper-old/
 #data/
-data/fran_torch.zarr/
+data/test_batched_torch.zarr/
+data/fran_pixsample.zarr/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
