@@ -7,6 +7,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 
 NUM_AVAIL_CPUS = len(os.sched_getaffinity(0))
+# NUM_AVAIL_CPUS = 1
 NUM_AVAIL_GPUS = torch.cuda.device_count()
 TRANSFORM = None
 
@@ -29,10 +30,10 @@ class BaseDataModule(pl.LightningDataModule):
         self.args = vars(args) if args is not None else {}
         self.num_workers = self.args.get("num_workers", DEFAULT_NUM_WORKERS)
         self.transform = self.args.get("transform", TRANSFORM)
-
         self.on_gpu = isinstance(self.args.get("gpus", None), (str, int))
 
         # Make sure to set the variables below in subclasses
+        self.batch_size: int
         self.num_classes: int
         self.num_bands: int
         self.num_dim: int
@@ -82,6 +83,7 @@ class BaseDataModule(pl.LightningDataModule):
             shuffle=True,
             num_workers=self.num_workers,
             pin_memory=self.on_gpu,
+            batch_size=self.batch_size,
         )
 
     def val_dataloader(self):
@@ -90,6 +92,7 @@ class BaseDataModule(pl.LightningDataModule):
             shuffle=False,
             num_workers=self.num_workers,
             pin_memory=self.on_gpu,
+            batch_size=self.batch_size,
         )
 
     def test_dataloader(self):
@@ -98,4 +101,5 @@ class BaseDataModule(pl.LightningDataModule):
             shuffle=False,
             num_workers=self.num_workers,
             pin_memory=self.on_gpu,
+            batch_size=self.batch_size,
         )
