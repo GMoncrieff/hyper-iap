@@ -1,8 +1,6 @@
 from argparse import Namespace
 from typing import Any, Dict
-import torch
 import torch.nn as nn
-import torch.utils.data
 
 from einops import rearrange
 
@@ -14,7 +12,7 @@ HIDDEN = 12
 DROPOUT = 0.2
 
 
-class TEMPCNNextractor(torch.nn.Module):
+class TEMPCNNextractor(nn.Module):
     def __init__(self, kernel_size, hidden, dropout, seq_len, input_dim) -> None:
         super().__init__()
         # model params
@@ -49,7 +47,7 @@ class TEMPCNNextractor(torch.nn.Module):
         )
 
     def forward(self, x):
-        x = rearrange(x, "s t c b -> (s b) c t", s=1)
+        x = rearrange(x, "b1 b2 z c -> (b1 b2) z c")
         x = self.conv_bn_relu1(x)
         x = self.conv_bn_relu2(x)
         x = self.conv_bn_relu3(x)
@@ -57,7 +55,7 @@ class TEMPCNNextractor(torch.nn.Module):
         return self.dense(x)
 
 
-class TEMPCNN(torch.nn.Module):
+class TEMPCNN(nn.Module):
     def __init__(
         self,
         data_config: Dict[str, Any],
@@ -92,7 +90,7 @@ class TEMPCNN(torch.nn.Module):
         return parser
 
 
-class Conv1D_BatchNorm_Relu_Dropout(torch.nn.Module):
+class Conv1D_BatchNorm_Relu_Dropout(nn.Module):
     def __init__(
         self, input_dim, hidden_dims, kernel_size=KERNEL_SIZE, drop_probability=DROPOUT
     ):
@@ -109,7 +107,7 @@ class Conv1D_BatchNorm_Relu_Dropout(torch.nn.Module):
         return self.block(X)
 
 
-class FC_BatchNorm_Relu_Dropout(torch.nn.Module):
+class FC_BatchNorm_Relu_Dropout(nn.Module):
     def __init__(self, input_dim, hidden_dims, drop_probability=DROPOUT):
         super(FC_BatchNorm_Relu_Dropout, self).__init__()
 

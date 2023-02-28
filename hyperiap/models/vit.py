@@ -111,7 +111,7 @@ class simpleVITextractor(nn.Module):
         #    Rearrange('b d t -> b t d')
         # )
         self.to_patch_embedding = nn.Sequential(
-            Rearrange("s (t p) c b -> (b s) t (p c)", p=patch_len, s=1),
+            Rearrange("b1 b2 (c p) z -> (b1 b2) c (p z)", p=patch_len),
             nn.Linear(patch_dim, dim),
         )
 
