@@ -1,11 +1,13 @@
 coverage
 einops
 flake8
+black
 numpy
 protobuf
 pytest
 pytorch-lightning
 requests
+torch
 torchmetrics
 urllib3
 xbatcher

@@ -20,5 +20,5 @@ def test_point_loader():
 
     x, y = next(iter(data.train_dataloader()))
 
-    assert list(y.shape) == [128, 1]
-    assert list(x.shape) == [128, 1, 9, 267]
+    assert list(y.shape) == [32, 1]
+    assert list(x.shape) == [32, 1, 9, 267]

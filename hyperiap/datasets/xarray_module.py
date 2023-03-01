@@ -17,7 +17,7 @@ BATCH_SIZE = 1
 
 PROCESSED_PROJECT = "science-sharing"
 # PROCESSED_TRAIN_PATH = "gcs://fran-share/clean_batched_torch.zarr"
-PROCESSED_TRAIN_PATH = "data/test_batched_torch.zarr"
+PROCESSED_TRAIN_PATH = "data/test_torch_batched.zarr"
 
 XDIM, YDIM, WLDIM, BATCHDIM = "x_batch", "y_batch", "wl", "input_batch"
 CHUNKS = {XDIM: -1, YDIM: -1, WLDIM: -1, BATCHDIM: 100}
