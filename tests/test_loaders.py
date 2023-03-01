@@ -9,8 +9,8 @@ def test_xarray_loader():
 
     x, y = next(iter(data.train_dataloader()))
 
-    assert list(y.shape) == [8, 10000]
-    assert list(x.shape) == [8, 10000, 9, 267]
+    assert list(y.shape) == [1, 100]
+    assert list(x.shape) == [1, 100, 9, 267]
 
 
 def test_point_loader():

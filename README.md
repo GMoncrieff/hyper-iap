@@ -19,11 +19,11 @@ Current and planned data sources, models and module features are indicated below
 #### Data sources
 - [x] Timeseries
 - [ ] Sentinel 2
-- [ ] Hyperspectral
+- [x] Hyperspectral
 #### Models
 - [x] [TempCNN](https://www.mdpi.com/2072-4292/11/5/523)
 - [x] [ViT](https://arxiv.org/abs/2010.11929)
-- [x] [SpectralFormer](https://ieeexplore.ieee.org/document/9627165)
+- [x] [Masked Autoencoder](https://arxiv.org/abs/2111.06377)
 
 #### Module features
 

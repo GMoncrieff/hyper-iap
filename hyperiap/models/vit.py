@@ -99,11 +99,14 @@ class simpleVITextractor(nn.Module):
     ) -> None:
         super().__init__()
 
-        # TO DO add padding such that any patch len can be given
-        assert seq_size % patch_len == 0
-        # TO DO add padding such that any patch len can be given
-        num_patches = seq_size // patch_len
+        # pad seq len if not divisible to patch len
+        padding = patch_len - (seq_size % patch_len)
+        self.pad = nn.ReplicationPad1d((0, padding))
+
+        num_patches = (seq_size + padding) // patch_len
         patch_dim = near_band * patch_len
+
+        # self.flat_batch = Rearrange("b1 b2 z c -> (b1 b2) z c")
 
         # self.to_embed_patch = nn.Sequential(
         #    Rearrange('s t c b -> (s b) c t', s=1),
@@ -111,7 +114,7 @@ class simpleVITextractor(nn.Module):
         #    Rearrange('b d t -> b t d')
         # )
         self.to_patch_embedding = nn.Sequential(
-            Rearrange("b1 b2 (c p) z -> (b1 b2) c (p z)", p=patch_len),
+            Rearrange("b z (c p) -> b c (p z)", p=patch_len),
             nn.Linear(patch_dim, dim),
         )
 
@@ -124,6 +127,11 @@ class simpleVITextractor(nn.Module):
         self.to_latent = nn.Identity()
 
     def forward(self, x):
+
+        # combine batch dims
+        # x = self.flat_batch(x)
+        # pad if needed
+        x = self.pad(x)
 
         # embedding every patch vector to embedding size: [batch, patch_num, embedding_size]
         # x = self.to_embed_patch(x)
