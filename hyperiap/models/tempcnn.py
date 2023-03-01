@@ -47,7 +47,7 @@ class TEMPCNNextractor(nn.Module):
         )
 
     def forward(self, x):
-        x = rearrange(x, "b1 b2 z c -> (b1 b2) z c")
+        # x = rearrange(x, "b1 b2 z c -> (b1 b2) z c")
         x = self.conv_bn_relu1(x)
         x = self.conv_bn_relu2(x)
         x = self.conv_bn_relu3(x)

@@ -1,4 +1,5 @@
 import torch
+from einops import rearrange
 
 from argparse import Namespace
 
@@ -29,7 +30,7 @@ class LitSelfSupervised(LitBaseModel):
 
     def training_step(self, batch, batch_idx):
         x, _ = batch
-        x = x.squeeze()
+        x = rearrange(x, "b1 b2 z c -> (b1 b2) z c")
 
         pred_pixel, masked_pixel = self(x)
         loss = self.loss_fn(pred_pixel, masked_pixel)
@@ -42,7 +43,7 @@ class LitSelfSupervised(LitBaseModel):
 
     def validation_step(self, batch, batch_idx):
         x, _ = batch
-        x = x.squeeze()
+        x = rearrange(x, "b1 b2 z c -> (b1 b2) z c")
 
         pred_pixel, masked_pixel = self(x)
         loss = self.loss_fn(pred_pixel, masked_pixel)
@@ -55,7 +56,7 @@ class LitSelfSupervised(LitBaseModel):
 
     def test_step(self, batch, batch_idx):
         x, _ = batch
-        x = x.squeeze()
+        x = rearrange(x, "b1 b2 z c -> (b1 b2) z c")
 
         pred_pixel, masked_pixel = self(x)
         loss = self.loss_fn(pred_pixel, masked_pixel)
