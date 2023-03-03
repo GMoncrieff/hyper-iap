@@ -11,24 +11,33 @@ on:
       - main
 
 jobs:
+  create-runner:
+    runs-on: ubuntu-latest
+    outputs:
+      label: ${{ steps.create-runner.outputs.label }}
+    steps:
+      - id: create-runner
+        uses: related-sciences/gce-github-runner@v0.4
+        with:
+          token: ${{ secrets.GH_SA_TOKEN }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          image_project: ubuntu-os-cloud
+          image_family: ubuntu-2004-lts
+          machine_type: e2-highmem-4
+
   pytest:
-
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ["3.9"]
-
+    needs: create-runner
+    runs-on: ${{ needs.create-runner.outputs.label }}
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 35
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.9
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.9'
         cache: 'pip'
 
     - name: Install dependencies
@@ -46,3 +55,9 @@ jobs:
       uses: codecov/codecov-action@v2
       with:
         files: test-results-${{ runner.os }}-${{ matrix.python-version }}.xml
+
+    - name: shutdown vm
+      uses: related-sciences/gce-github-runner@v0.4
+      with:
+        command: stop
+      if: always()
