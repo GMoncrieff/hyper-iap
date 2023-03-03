@@ -148,7 +148,8 @@ def main():
             --ssmodel_class=mae.MAE \
             --save_classifier \
             --data_class=xarray_module.XarrayDataModule \
-            --limit_val_batches=5 --limit_train_batches=10 --max_epochs=3
+            --limit_val_batches=5 --limit_train_batches=5 --max_epochs=5 \
+            --wandb
     """
     pl.seed_everything(1234)
 
@@ -178,10 +179,11 @@ def main():
 
     if args.wandb:
         logger = pl.loggers.WandbLogger(
-            log_model="all", save_dir=str(log_dir), job_type="train"
+            log_model="all", save_dir=str(log_dir), job_type="train", project="hyperiap"
         )
         logger.watch(seq_model, log_freq=max(100, args.log_every_n_steps))
         logger.log_hyperparams(vars(args))
+        logger.experiment.config["model"] = "hyperiap_selfsupervised"
         experiment_dir = logger.experiment.dir
     # -----------
     # callbacks

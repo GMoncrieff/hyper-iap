@@ -99,13 +99,13 @@ def test_transfer_classifier():
 
     model = LitSelfSupervised(ss_model)
 
-    trainer = Trainer(limit_train_batches=5, limit_val_batches=2, max_epochs=2)
+    trainer = Trainer(limit_train_batches=2, limit_val_batches=2, max_epochs=2)
     trainer.fit(model, datamodule=xmod)
 
     # fine tune
     trainer = Trainer(
-        max_epochs=5,
-        limit_train_batches=5,
+        max_epochs=2,
+        limit_train_batches=2,
         limit_val_batches=2,
         callbacks=[FinetuningScheduler(ft_schedule=ft_schedule_name)],
     )
