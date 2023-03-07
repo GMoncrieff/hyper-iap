@@ -154,6 +154,7 @@ def main():
      provide values for those arguments before invoking --help, like so:
      ```
      python run_classifier.py --model_class=vit.simpleVIT --data_class=xarray_module.XarrayDataModule --help
+
      python run_classifier.py \
             --model_class=vit.simpleVIT \
             --data_class=xarray_module.XarrayDataModule \
