@@ -7,7 +7,7 @@ import torch
 import numpy as np
 
 from hyperiap.litmodels.litclassifier import LitClassifier
-from finetuning_scheduler import FinetuningScheduler
+from finetuning_scheduler import FinetuningScheduler, fts_supporters
 
 DATA_CLASS_MODULE = "hyperiap.datasets"
 MODEL_CLASS_MODULE = "hyperiap.models"
@@ -157,13 +157,22 @@ def main():
      python run_classifier.py \
             --model_class=vit.simpleVIT \
             --data_class=xarray_module.XarrayDataModule \
-            --limit_val_batches=5 --limit_train_batches=5 --max_epochs=5\
-            --wandb
+            --limit_val_batches=5 --limit_train_batches=5 --max_epochs=10\
+            --wandb --log_every_n_steps=2
+
      python run_classifier.py --model_class=vit.simpleVIT \
             --data_class=xarray_module.XarrayDataModule \
             --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5 \
             --finetune \
-            --load_checkpoint=training/logs/lightning_logs/version_4/epoch=0004-val.loss=0.029-val.acc=1.000.ckpt \
+            --load_checkpoint=training/logs/wandb//epoch=0004-val.loss=0.029-val.acc=1.000.ckpt \
+            --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml
+
+    python run_classifier.py --model_class=vit.simpleVIT \
+            --data_class=xarray_module.XarrayDataModule \
+            --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5 \
+            --load_checkpoint=training/ss_logs/wandb/run-20230307_143609-18sqhvq1/files/ss_classifier.ckpt \
+            --wandb --log_every_n_steps=2 \
+            --finetune \
             --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml
     """
     pl.seed_everything(1234)
@@ -204,7 +213,7 @@ def main():
 
     if args.wandb:
         logger = pl.loggers.WandbLogger(
-            log_model="all", save_dir=str(log_dir), job_type="train", project="hyperiap"
+            log_model=True, save_dir=str(log_dir), job_type="train", project="hyperiap"
         )
         logger.watch(seq_model, log_freq=max(100, args.log_every_n_steps))
         logger.log_hyperparams(vars(args))
@@ -213,15 +222,28 @@ def main():
     # -----------
     # callbacks
     # -----------
-    checkpoint_callback = pl.callbacks.ModelCheckpoint(
-        save_top_k=1,
-        filename="epoch={epoch:04d}-val.loss={val_loss:.3f}-val.acc={val_acc:.3f}",
-        monitor="val_loss",
-        mode="min",
-        auto_insert_metric_name=False,
-        dirpath=experiment_dir,
-        every_n_epochs=args.check_val_every_n_epoch,
-    )
+
+    if args.finetune:
+        checkpoint_callback = fts_supporters.FTSCheckpoint(
+            save_top_k=1,
+            filename="class-model-best",
+            monitor="val_loss",
+            mode="min",
+            auto_insert_metric_name=False,
+            dirpath=experiment_dir,
+            every_n_epochs=args.check_val_every_n_epoch,
+        )
+    else:
+        checkpoint_callback = pl.callbacks.ModelCheckpoint(
+            save_top_k=1,
+            filename="class-model-best",
+            monitor="val_loss",
+            mode="min",
+            auto_insert_metric_name=False,
+            dirpath=experiment_dir,
+            every_n_epochs=args.check_val_every_n_epoch,
+        )
+
     summary_callback = pl.callbacks.ModelSummary(max_depth=2)
     learning_rate_callback = pl.callbacks.LearningRateMonitor(logging_interval="step")
     callbacks = [summary_callback, checkpoint_callback, learning_rate_callback]
@@ -262,9 +284,9 @@ def main():
     )  # turn profiling off during testing
 
     best_model_path = checkpoint_callback.best_model_path
-    f"Best model saved at: {best_model_path}"
+    print(f"Best model saved at: {best_model_path}")
     if args.wandb:
-        "Best model also uploaded to W&B"
+        print("Best model also uploaded to W&B")
 
     # trainer.test(seq_model, datamodule=data)
 

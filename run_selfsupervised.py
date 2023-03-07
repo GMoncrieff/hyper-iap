@@ -190,7 +190,7 @@ def main():
     # -----------
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         save_top_k=1,
-        filename="epoch={epoch:04d}-val.loss={val_loss:.3f}-val.acc={val_acc:.3f}",
+        filename="self-model-best",
         monitor="val_loss",
         mode="min",
         auto_insert_metric_name=False,
@@ -239,9 +239,9 @@ def main():
     )  # turn profiling off during testing
 
     best_model_path = checkpoint_callback.best_model_path
-    f"Best model saved at: {best_model_path}"
+    print(f"Best model saved at: {best_model_path}")
     if args.wandb:
-        "Best model also uploaded to W&B"
+        print("Best model also uploaded to W&B")
 
     if args.save_classifier:
         seq_model = seq_model_class.load_from_checkpoint(
