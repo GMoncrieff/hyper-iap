@@ -90,7 +90,6 @@ class LitClassifier(LitBaseModel):
 
     @staticmethod
     def add_to_argparse(parser):
-        LitBaseModel.add_to_argparse(parser)
         parser.add_argument("--lr", type=float, default=LR)
         parser.add_argument("--T_0", type=float, default=T_0)
         parser.add_argument(

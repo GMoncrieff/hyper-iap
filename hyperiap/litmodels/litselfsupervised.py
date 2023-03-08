@@ -65,7 +65,6 @@ class LitSelfSupervised(LitBaseModel):
 
     @staticmethod
     def add_to_argparse(parser):
-        LitBaseModel.add_to_argparse(parser)
         parser.add_argument("--lr_ss", type=float, default=LR_SS)
         parser.add_argument("--T_0_ss", type=float, default=T_0_SS)
         parser.add_argument(
