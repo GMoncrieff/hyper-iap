@@ -5,6 +5,9 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch
 import numpy as np
+import wandb
+import random
+from datetime import datetime
 
 from hyperiap.litmodels.litclassifier import LitClassifier
 from hyperiap.litmodels.litselfsupervised import LitSelfSupervised
@@ -16,6 +19,7 @@ MODEL_CLASS_MODULE = "hyperiap.models"
 # for reproducibility
 np.random.seed(42)
 torch.manual_seed(42)
+pl.seed_everything(1234)
 
 
 def import_class(module_and_class_name: str) -> type:
@@ -67,7 +71,7 @@ def _setup_parser():
     parser.add_argument(
         "--wandb",
         action="store_true",
-        default=False,
+        default=True,
         help="If passed, logs experiment results to Weights & Biases. Otherwise logs only to local Tensorboard.",
     )
     # pytorch profiling
@@ -159,7 +163,9 @@ def _setup_parser():
     return parser
 
 
-def setup_callbacks(args: Namespace, log_dir, model: torch.nn.Module, finetune=False):
+def setup_callbacks(
+    args: Namespace, log_dir, model: torch.nn.Module, finetune=False, append=None
+):
     """Set up callbacks for the experiment."""
     Path(log_dir).mkdir(parents=True, exist_ok=True)
     logger = pl.loggers.TensorBoardLogger(log_dir)
@@ -176,11 +182,11 @@ def setup_callbacks(args: Namespace, log_dir, model: torch.nn.Module, finetune=F
     # -----------
     # callbacks
     # -----------
-
+    filename_run = "class-model-best" + append
     if finetune:
         checkpoint_callback = fts_supporters.FTSCheckpoint(
             save_top_k=1,
-            filename="class-model-best",
+            filename=filename_run,
             monitor="val_loss",
             mode="min",
             auto_insert_metric_name=False,
@@ -190,7 +196,7 @@ def setup_callbacks(args: Namespace, log_dir, model: torch.nn.Module, finetune=F
     else:
         checkpoint_callback = pl.callbacks.ModelCheckpoint(
             save_top_k=1,
-            filename="class-model-best",
+            filename=filename_run,
             monitor="val_loss",
             mode="min",
             auto_insert_metric_name=False,
@@ -232,23 +238,30 @@ def main():
      Run an experiment.
      Sample command:
      ```
-    python run_all.py --model_class=vit.simpleVIT --ssmodel_class=mae.MAE
+     python run_all.py --model_class=vit.simpleVIT --ssmodel_class=mae.MAE
      ```
      For basic help documentation, run the command
      ```
-     python run_classifier.py --help
+     python run_all.py --help
      ```
      The available command line args differ depending on some of the arguments
      including --model_class and --data_class.
      To see which command line args are available and read their documentation
      provide values for those arguments before invoking --help, like so:
      ```
-        python run_classifier.py --model_class=vit.simpleVIT --help
+        python run_all.py --model_class=vit.simpleVIT \
+            --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5 \
+            --wandb --log_every_n_steps=2 \
+            --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml
     """
-    pl.seed_everything(1234)
-
+    # seed random with datetime
+    random.seed(datetime.now())
     parser = _setup_parser()
     args = parser.parse_args()
+
+    if args.ft_schedule is None:
+        raise ValueError("Must provide a finetuning schedule")
+
     data, point = setup_data_from_args(args)
     model, ssmodel = setup_ss_from_args(args, data)
 
@@ -259,36 +272,43 @@ def main():
     ss_model_class = LitSelfSupervised
     log_dir = Path("training") / "logs"
 
+    wandb.init(project="hyperiap")
+    run_id = wandb.run.id
+
     # -----------
     # ss model
     # -----------
 
-    seq_model = ss_model_class(args=args, model=ssmodel)
+    seq_ss_model = ss_model_class(args=args, model=ssmodel)
 
     # setup callbacks
     callbacks, checkpoint_callback, profiler, logger = setup_callbacks(
-        args=args, log_dir=log_dir, seq_model=seq_model, finetune=False
+        args=args, log_dir=log_dir, model=seq_ss_model, finetune=False, append="_ss"
     )
     callbacks.append(checkpoint_callback)
 
     # fit
     trainer = pl.Trainer.from_argparse_args(args, callbacks=callbacks, logger=logger)
     trainer.profiler = profiler
-    trainer.fit(ssmodel, datamodule=data)
+    trainer.fit(seq_ss_model, datamodule=data)
 
     # save best model in useable format
-    seq_model = seq_model_class.load_from_checkpoint(
+    seq_ss_model = ss_model_class.load_from_checkpoint(
         checkpoint_callback.best_model_path, args=args, model=ssmodel
     )
-    litclass = seq_model_class(seq_model.model.encoder)
+    litclass = seq_model_class(seq_ss_model.model.encoder)
     trainer = pl.Trainer(limit_val_batches=0, enable_checkpointing=False, logger=False)
     trainer.validate(litclass, datamodule=data)
     ss_checkpoint = logger.experiment.dir + "/ss_classifier.ckpt"
     trainer.save_checkpoint(ss_checkpoint)
 
+    # end wandb experiment
+    # wandb.finish()
+
     # -----------
     # noisy training
     # -----------
+    wandb.init(id=run_id, resume="must")
 
     seq_model = seq_model_class.load_from_checkpoint(
         ss_checkpoint, args=args, model=model
@@ -296,8 +316,9 @@ def main():
 
     # setup callbacks
     callbacks, checkpoint_callback, profiler, logger = setup_callbacks(
-        args=args, log_dir=log_dir, seq_model=seq_model, finetune=False
+        args=args, log_dir=log_dir, model=seq_model, finetune=False, append="_noisy"
     )
+    run_id = logger.version
     callbacks.append(checkpoint_callback)
 
     # train on noisy lables
@@ -306,29 +327,33 @@ def main():
     trainer.fit(seq_model, datamodule=data)
 
     noisy_checkpoint = checkpoint_callback.best_model_path
+    # end wandb experiment
+    # wandb.finish()
 
     # -----------
     # clean training
     # -----------
+    wandb.init(id=run_id, resume="must")
 
     seq_model = seq_model_class.load_from_checkpoint(
         noisy_checkpoint, args=args, model=model
     )
-    transfer = setup_transfer_from_args(args, seq_model.model, data)
-    # transfer = setup_transfer_from_args(args, seq_model.model, point)
+    # transfer = setup_transfer_from_args(args, seq_model.model, data)
+    transfer = setup_transfer_from_args(args, seq_model.model, point)
     seq_model = seq_model_class(args=args, model=transfer)
 
     # setup callbacks
     callbacks, checkpoint_callback, profiler, logger = setup_callbacks(
-        args=args, log_dir=log_dir, seq_model=seq_model, finetune=False
+        args=args, log_dir=log_dir, model=seq_model, finetune=False, append="_clean"
     )
+    run_id = logger.version
     callbacks.append(checkpoint_callback)
 
     # train on clean lables
     trainer = pl.Trainer.from_argparse_args(args, callbacks=callbacks, logger=logger)
     trainer.profiler = profiler
-    trainer.fit(seq_model, datamodule=data)
-    # trainer.fit(seq_model, datamodule=point)
+    # trainer.fit(seq_model, datamodule=data)
+    trainer.fit(seq_model, datamodule=point)
 
     trainer.profiler = (
         pl.profilers.PassThroughProfiler()
@@ -341,6 +366,12 @@ def main():
 
     # do we automatically test the best model?
     # trainer.test(seq_model, datamodule=data)
+
+    # create a random number
+    random_number = random.randint(1, 100000)
+    wandb.log({"test_loss": random_number})
+    # end wandb experiment
+    wandb.finish()
 
 
 if __name__ == "__main__":
