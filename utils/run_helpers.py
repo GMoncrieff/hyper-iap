@@ -162,7 +162,7 @@ def setup_callbacks(
     log_dir: str,
     model: torch.nn.Module,
     finetune=False,
-    append=None,
+    append="",
     project="hyperiap",
 ):
     """Set up callbacks for training, including logging, checkpointing, and early stopping."""
