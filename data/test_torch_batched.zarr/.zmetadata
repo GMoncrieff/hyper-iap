@@ -1,0 +1,99 @@
+{
+    "metadata": {
+        ".zattrs": {},
+        ".zgroup": {
+            "zarr_format": 2
+        },
+        "label/.zarray": {
+            "chunks": [
+                1000
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                1000
+            ],
+            "zarr_format": 2
+        },
+        "label/.zattrs": {
+            "AREA_OR_POINT": "Area",
+            "TIFFTAG_RESOLUTIONUNIT": "2 (pixels/inch)",
+            "TIFFTAG_SOFTWARE": "E",
+            "TIFFTAG_XRESOLUTION": 1,
+            "TIFFTAG_YRESOLUTION": 1,
+            "_ARRAY_DIMENSIONS": [
+                "input_batch"
+            ],
+            "grid_mapping": "spatial_ref"
+        },
+        "reflectance/.zarray": {
+            "chunks": [
+                267,
+                3,
+                3,
+                1000
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                267,
+                3,
+                3,
+                1000
+            ],
+            "zarr_format": 2
+        },
+        "reflectance/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "wl",
+                "x_batch",
+                "y_batch",
+                "input_batch"
+            ]
+        },
+        "wl/.zarray": {
+            "chunks": [
+                267
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                267
+            ],
+            "zarr_format": 2
+        },
+        "wl/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "wl"
+            ]
+        }
+    },
+    "zarr_consolidated_format": 1
+}

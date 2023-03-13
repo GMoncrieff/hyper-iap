@@ -1,6 +1,6 @@
 import torch
 from torchmetrics import Accuracy
-
+from einops import rearrange
 from argparse import Namespace
 
 from hyperiap.litmodels.litbasemodel import LitBaseModel
@@ -25,9 +25,15 @@ class LitClassifier(LitBaseModel):
 
         self.T_0 = self.args.get("T_0", T_0)
 
-        self.train_acc = Accuracy()
-        self.val_acc = Accuracy()
-        self.test_acc = Accuracy()
+        self.train_acc = Accuracy(
+            task="multiclass", num_classes=self.data_config.get("num_classes")
+        )
+        self.val_acc = Accuracy(
+            task="multiclass", num_classes=self.data_config.get("num_classes")
+        )
+        self.test_acc = Accuracy(
+            task="multiclass", num_classes=self.data_config.get("num_classes")
+        )
 
     def forward(self, x):
         # use forward for inference/predictions
@@ -40,7 +46,9 @@ class LitClassifier(LitBaseModel):
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        y = y.squeeze()
+        y = rearrange(y, "b1 b2 -> (b1 b2)")
+        x = rearrange(x, "b1 b2 z c -> (b1 b2) z c")
+
         logits = self(x)
         loss = self.loss_fn(logits, y)
         self.train_acc(logits, y)
@@ -54,7 +62,9 @@ class LitClassifier(LitBaseModel):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        y = y.squeeze()
+        y = rearrange(y, "b1 b2 -> (b1 b2)")
+        x = rearrange(x, "b1 b2 z c -> (b1 b2) z c")
+
         logits = self(x)
         loss = self.loss_fn(logits, y)
         self.val_acc(logits, y)
@@ -68,7 +78,9 @@ class LitClassifier(LitBaseModel):
 
     def test_step(self, batch, batch_idx):
         x, y = batch
-        y = y.squeeze()
+        y = rearrange(y, "b1 b2 -> (b1 b2)")
+        x = rearrange(x, "b1 b2 z c -> (b1 b2) z c")
+
         logits = self(x)
         loss = self.loss_fn(logits, y)
         self.test_acc(logits, y)

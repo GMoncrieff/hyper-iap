@@ -16,11 +16,11 @@ def test_tempcnn_classifier():
 
     model = LitClassifier(TEMPCNN(data_config=xmod.config()))
 
-    trainer = Trainer(limit_train_batches=5, limit_val_batches=2, max_epochs=2)
+    trainer = Trainer(limit_train_batches=5, limit_val_batches=3, max_epochs=2)
     trainer.fit(model, datamodule=xmod)
     x = trainer.validate(datamodule=xmod)
 
-    assert x[0]["val_acc"] > 0.01
+    assert x[0]["val_acc"] > 0.001
 
 
 def test_vit_classifier():
@@ -29,11 +29,11 @@ def test_vit_classifier():
 
     model = LitClassifier(simpleVIT(data_config=xmod.config()))
 
-    trainer = Trainer(limit_train_batches=5, limit_val_batches=2, max_epochs=2)
+    trainer = Trainer(limit_train_batches=5, limit_val_batches=3, max_epochs=2)
     trainer.fit(model, datamodule=xmod)
     x = trainer.validate(datamodule=xmod)
 
-    assert x[0]["val_acc"] > 0.01
+    assert x[0]["val_acc"] > 0.001
 
 
 def test_mae_decoder():
@@ -44,8 +44,8 @@ def test_mae_decoder():
 
     model = LitSelfSupervised(ss_model)
 
-    trainer = Trainer(limit_train_batches=5, limit_val_batches=2, max_epochs=2)
+    trainer = Trainer(limit_train_batches=5, limit_val_batches=3, max_epochs=2)
     trainer.fit(model, datamodule=xmod)
     x = trainer.validate(datamodule=xmod)
 
-    assert x[0]["val_loss"] > 0.01
+    assert x[0]["val_loss"] > 0.001

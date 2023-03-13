@@ -31,7 +31,7 @@ class MAE(nn.Module):
         self.masking_ratio = masking_ratio
 
         # extract some hyperparameters and functions from encoder (vision transformer to be trained)
-
+        self.pad = encoder.embedding.pad
         num_patches, encoder_dim = encoder.embedding.pos_embedding.shape[-2:]
         self.to_patch, self.patch_to_emb = encoder.embedding.to_patch_embedding[:2]
         pixel_values_per_patch = self.patch_to_emb.weight.shape[-1]
@@ -59,7 +59,7 @@ class MAE(nn.Module):
         device = img.device
 
         # get patches
-
+        img = self.pad(img)
         patches = self.to_patch(img)
         batch, num_patches, *_ = patches.shape
 

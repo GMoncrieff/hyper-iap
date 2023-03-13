@@ -3,25 +3,25 @@ import torch
 from torch.utils.data import Dataset
 import xarray as xr
 from einops import rearrange
+import numpy as np
 
 PREDICTOR_VAR = "reflectance"
-LABEL_VAR = "label"
+LABEL_VAR = "recode"
 
 
-class XarrayDataset(Dataset):
+class PointDataset(Dataset):
     def __init__(
         self,
         dataset: xr.Dataset,
         x_batch: str,
         length: int,
-        batch_size: int,
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
     ):
+
         self.dataset = dataset
         self.x_batch = x_batch
         self.length = length
-        self.batch_size = batch_size
         self.transform = transform
         self.target_transform = target_transform
 
@@ -29,18 +29,12 @@ class XarrayDataset(Dataset):
         return self.length
 
     def __getitem__(self, index):
-        batch = self.dataset.isel(
-            {
-                self.x_batch: slice(
-                    index * self.batch_size, (index * self.batch_size) + self.batch_size
-                )
-            }
-        )
-        x_batch = batch[PREDICTOR_VAR].load()
-        y_batch = batch[LABEL_VAR].load()
-        x_batch = torch.from_numpy(x_batch.data)
-        x_batch = rearrange(x_batch, "wl x y b -> b (x y) wl")
-        y_batch = torch.from_numpy(y_batch.data).type(torch.int64)
+        batch = self.dataset.isel({self.x_batch: index})
+        x_batch = np.expand_dims(batch[PREDICTOR_VAR].load().data, axis=2)
+        y_batch = np.expand_dims(batch[LABEL_VAR].load().data, axis=0)
+        x_batch = torch.from_numpy(x_batch)
+        x_batch = rearrange(x_batch, "wl z b -> b z wl")
+        y_batch = torch.from_numpy(y_batch).type(torch.int64)
 
         if self.transform:
             x_batch = self.transform(x_batch)
