@@ -1,0 +1,276 @@
+wandb_version: 1
+
+T_0:
+  desc: null
+  value: 2
+T_0_ss:
+  desc: null
+  value: 2
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.13.10
+    framework: lightning
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    python_version: 3.9.16
+    start_time: 1678367078.073121
+    t:
+      1:
+      - 1
+      - 9
+      - 41
+      - 54
+      - 55
+      2:
+      - 1
+      - 9
+      - 41
+      - 54
+      - 55
+      3:
+      - 1
+      - 2
+      - 14
+      - 19
+      - 23
+      - 24
+      - 37
+      4: 3.9.16
+      5: 0.13.10
+      8:
+      - 5
+accelerator:
+  desc: null
+  value: None
+accumulate_grad_batches:
+  desc: null
+  value: None
+amp_backend:
+  desc: null
+  value: native
+amp_level:
+  desc: null
+  value: None
+auto_lr_find:
+  desc: null
+  value: false
+auto_scale_batch_size:
+  desc: null
+  value: false
+auto_select_gpus:
+  desc: null
+  value: false
+benchmark:
+  desc: null
+  value: None
+check_val_every_n_epoch:
+  desc: null
+  value: 1
+data_class:
+  desc: null
+  value: xarray_module.XarrayDataModule
+decoder_depth:
+  desc: null
+  value: 1
+decoder_dim:
+  desc: null
+  value: 128
+decoder_dim_head:
+  desc: null
+  value: 32
+decoder_heads:
+  desc: null
+  value: 4
+default_root_dir:
+  desc: null
+  value: None
+depth:
+  desc: null
+  value: 5
+detect_anomaly:
+  desc: null
+  value: false
+deterministic:
+  desc: null
+  value: None
+devices:
+  desc: null
+  value: None
+dim:
+  desc: null
+  value: 64
+dim_head:
+  desc: null
+  value: 16
+dropout:
+  desc: null
+  value: 0.2
+emb_dropout:
+  desc: null
+  value: 0.1
+enable_checkpointing:
+  desc: null
+  value: true
+enable_model_summary:
+  desc: null
+  value: true
+enable_progress_bar:
+  desc: null
+  value: true
+fast_dev_run:
+  desc: null
+  value: false
+ft_schedule:
+  desc: null
+  value: hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml
+gpus:
+  desc: null
+  value: None
+gradient_clip_algorithm:
+  desc: null
+  value: None
+gradient_clip_val:
+  desc: null
+  value: None
+heads:
+  desc: null
+  value: 4
+ipus:
+  desc: null
+  value: None
+limit_predict_batches:
+  desc: null
+  value: None
+limit_test_batches:
+  desc: null
+  value: None
+limit_train_batches:
+  desc: null
+  value: 10
+limit_val_batches:
+  desc: null
+  value: 5
+log_every_n_steps:
+  desc: null
+  value: 2
+logger:
+  desc: null
+  value: true
+loss:
+  desc: null
+  value: cross_entropy
+loss_ss:
+  desc: null
+  value: mse_loss
+lr:
+  desc: null
+  value: 0.01
+lr_ss:
+  desc: null
+  value: 0.001
+masking_ratio:
+  desc: null
+  value: 0.75
+max_epochs:
+  desc: null
+  value: 5
+max_steps:
+  desc: null
+  value: -1
+max_time:
+  desc: null
+  value: None
+min_epochs:
+  desc: null
+  value: None
+min_steps:
+  desc: null
+  value: None
+mlp_dim:
+  desc: null
+  value: 8
+mode:
+  desc: null
+  value: ViT
+model:
+  desc: null
+  value: hyperiap_classifier
+model_class:
+  desc: null
+  value: vit.simpleVIT
+move_metrics_to_cpu:
+  desc: null
+  value: false
+multiple_trainloader_mode:
+  desc: null
+  value: max_size_cycle
+num_nodes:
+  desc: null
+  value: 1
+num_processes:
+  desc: null
+  value: None
+num_sanity_val_steps:
+  desc: null
+  value: 2
+overfit_batches:
+  desc: null
+  value: 0.0
+patch_len:
+  desc: null
+  value: 2
+plugins:
+  desc: null
+  value: None
+point_class:
+  desc: null
+  value: xarray_module.XarrayDataModule
+precision:
+  desc: null
+  value: 32
+profile:
+  desc: null
+  value: false
+profiler:
+  desc: null
+  value: None
+reload_dataloaders_every_n_epochs:
+  desc: null
+  value: 0
+replace_sampler_ddp:
+  desc: null
+  value: true
+resume_from_checkpoint:
+  desc: null
+  value: None
+ssmodel_class:
+  desc: null
+  value: mae.MAE
+stop_early:
+  desc: null
+  value: 0
+strategy:
+  desc: null
+  value: None
+sync_batchnorm:
+  desc: null
+  value: false
+tpu_cores:
+  desc: null
+  value: None
+track_grad_norm:
+  desc: null
+  value: -1
+transfer_class:
+  desc: null
+  value: vit.TransferLearningVIT
+val_check_interval:
+  desc: null
+  value: None
+wandb:
+  desc: null
+  value: true
+weights_save_path:
+  desc: null
+  value: None

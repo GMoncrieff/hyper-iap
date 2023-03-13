@@ -1,0 +1,10 @@
+wandb_version: 1
+
+data_class:
+  value: xarray_module.XarrayDataModule
+dropout:
+  value: 0.1
+lr:
+  value: 0.001
+model_class:
+  value: vit.simpleVIT

@@ -38,14 +38,12 @@ model_weights/
 tests/save_dir  
 tests/tests_tt_dir/
 processed/
+training/
 raw/
 hyper-old/
 #data/
 data/test_batched_torch.zarr/
 data/fran_pixsample.zarr/
-training/logs/
-training/ss_logs/
-training/wandb/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

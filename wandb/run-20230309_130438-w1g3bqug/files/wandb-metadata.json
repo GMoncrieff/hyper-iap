@@ -1,0 +1,72 @@
+{
+    "os": "Linux-4.19.0-23-cloud-amd64-x86_64-with-glibc2.28",
+    "python": "3.9.16",
+    "heartbeatAt": "2023-03-09T13:04:38.517130",
+    "startedAt": "2023-03-09T13:04:38.063319",
+    "docker": null,
+    "cuda": "11.0.228",
+    "args": [
+        "--wandb",
+        "--limit_val_batches",
+        "5",
+        "--limit_train_batches",
+        "10",
+        "--log_every_n_steps",
+        "2",
+        "--max_epochs",
+        "5",
+        "--data_class=xarray_module.XarrayDataModule",
+        "--dropout=0.2",
+        "--ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml",
+        "--lr=0.01",
+        "--model_class=vit.simpleVIT"
+    ],
+    "state": "running",
+    "program": "/home/glennmoncrieff/hyper-iap/run_all.py",
+    "codePath": "run_all.py",
+    "git": {
+        "remote": "https://github.com/GMoncrieff/hyper-iap.git",
+        "commit": "67f3bf4fa28d7f9c3d273345cf60dd400c6d389f"
+    },
+    "email": "glennwithtwons@gmail.com",
+    "root": "/home/glennmoncrieff/hyper-iap",
+    "host": "rs-dl",
+    "username": "glennmoncrieff",
+    "executable": "/home/glennmoncrieff/mambaforge/envs/rs-hyper/bin/python3.9",
+    "cpu_count": 2,
+    "cpu_count_logical": 4,
+    "cpu_freq": {
+        "current": 2249.998,
+        "min": 0.0,
+        "max": 0.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2249.998,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2249.998,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2249.998,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2249.998,
+            "min": 0.0,
+            "max": 0.0
+        }
+    ],
+    "disk": {
+        "total": 98.18611526489258,
+        "used": 42.066856384277344
+    },
+    "memory": {
+        "total": 31.41571807861328
+    }
+}

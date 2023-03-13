@@ -13,7 +13,7 @@ class LitBaseModel(pl.LightningModule):
         self.model = model
         self.args = vars(args) if args is not None else {}
 
-        optimizer = self.args.get("optimizer", OPTIMIZER)
+        optimizer = "AdamW"
         self.optimizer_class = getattr(torch.optim, optimizer)
 
     @abstractmethod
@@ -41,13 +41,3 @@ class LitBaseModel(pl.LightningModule):
         #    "monitor": "val/loss",
         # }
         return [optimizer], [scheduler]
-
-    @staticmethod
-    def add_to_argparse(parser):
-        parser.add_argument(
-            "--optimizer",
-            type=str,
-            default=OPTIMIZER,
-            help="optimizer class from torch.optim",
-        )
-        return parser

@@ -20,3 +20,4 @@ ipytree
 geopandas
 finetuning-scheduler
 dask-ml
+wandb
