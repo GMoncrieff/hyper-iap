@@ -11,33 +11,23 @@ on:
       - main
 
 jobs:
-  create-runner:
-    runs-on: ubuntu-latest
-    outputs:
-      label: ${{ steps.create-runner.outputs.label }}
-    steps:
-      - id: create-runner
-        uses: related-sciences/gce-github-runner@v0.4
-        with:
-          token: ${{ secrets.GH_SA_TOKEN }}
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          image_project: ubuntu-os-cloud
-          image_family: ubuntu-2004-lts
-          machine_type: e2-highmem-4
-
   pytest:
-    needs: create-runner
-    runs-on: ${{ needs.create-runner.outputs.label }}
+
+    runs-on: fyncompute01
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9"]
+
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 35
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python 3.9
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: ${{ matrix.python-version }}
         cache: 'pip'
 
     - name: Install dependencies
@@ -49,15 +39,9 @@ jobs:
       run: |
         coverage run -m pytest
         pwd
-        coverage xml -i -o test-results-${{ runner.os }}-${{ matrix.python-version }}.xml
+        coverage xml -i -o test-results-${{ matrix.python-version }}.xml
 
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
       with:
-        files: test-results-${{ runner.os }}-${{ matrix.python-version }}.xml
-
-    - name: shutdown vm
-      uses: related-sciences/gce-github-runner@v0.4
-      with:
-        command: stop
-      if: always()
+        files: test-results-${{ matrix.python-version }}.xml
