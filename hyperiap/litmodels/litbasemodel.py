@@ -4,6 +4,8 @@ from argparse import Namespace
 
 from abc import abstractmethod
 
+OPTIMIZER = "AdamW"
+
 
 class LitBaseModel(pl.LightningModule):
     def __init__(self, model, args: Namespace = None):
