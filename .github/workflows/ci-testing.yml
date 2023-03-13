@@ -3,21 +3,21 @@ name: CI testing
 # see: https://help.github.com/en/actions/reference/events-that-trigger-workflows
 on:
   # Trigger the workflow on push or pull request, but only for the master branch
+  workflow_dispatch:
   push:
     branches:
       - main
   pull_request:
     branches:
       - main
-
+  
 jobs:
   pytest:
 
-    runs-on: ${{ matrix.os }}
+    runs-on: fyncompute01
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
         python-version: ["3.9"]
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
@@ -40,9 +40,9 @@ jobs:
       run: |
         coverage run -m pytest
         pwd
-        coverage xml -i -o test-results-${{ runner.os }}-${{ matrix.python-version }}.xml
+        coverage xml -i -o test-results-${{ matrix.python-version }}.xml
 
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v2
       with:
-        files: test-results-${{ runner.os }}-${{ matrix.python-version }}.xml
+        files: test-results-${{ matrix.python-version }}.xml
