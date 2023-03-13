@@ -13,8 +13,8 @@ on:
   
 jobs:
   pytest:
+    runs-on: self-hosted
 
-    runs-on: fyncompute01
     strategy:
       fail-fast: false
       matrix:
