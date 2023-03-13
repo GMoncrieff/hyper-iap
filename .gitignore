@@ -43,6 +43,9 @@ hyper-old/
 #data/
 data/test_batched_torch.zarr/
 data/fran_pixsample.zarr/
+training/logs/
+training/ss_logs/
+training/wandb/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
