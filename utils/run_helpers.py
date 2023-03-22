@@ -175,7 +175,7 @@ def setup_callbacks(
         logger = pl.loggers.WandbLogger(
             log_model=True, save_dir=str(log_dir), job_type="train", project=project
         )
-        logger.watch(model, log_freq=max(100, args.log_every_n_steps))
+        logger.watch(model, log_freq=max(50, args.log_every_n_steps))
         logger.log_hyperparams(vars(args))
         logger.experiment.config["model"] = "hyperiap_classifier"
         experiment_dir = logger.experiment.dir

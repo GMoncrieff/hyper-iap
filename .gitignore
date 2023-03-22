@@ -44,6 +44,7 @@ hyper-old/
 #data/
 data/test_batched_torch.zarr/
 data/fran_pixsample.zarr/
+hyperiap/callbacks/wandb_table.py
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -132,3 +133,4 @@ venv.bak/
 lightning_logs/
 MNIST
 .DS_Store
+hyperiap/callbacks/wandb_table.py

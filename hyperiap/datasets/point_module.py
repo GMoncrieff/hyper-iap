@@ -19,6 +19,7 @@ N_DIM = 9
 PROCESSED_TRAIN_DATA = "data/test_fran_pixsample.zarr"
 # PROCESSED_TEST_DATA = "data/fran_pixsample.zarr"
 WLDIM, ZDIM, BATCHDIM = "wl", "z", "index"
+CHUNKS = {ZDIM: -1, WLDIM: -1, BATCHDIM: 100}
 
 
 class PointDataModule(BaseDataModule):
@@ -36,6 +37,22 @@ class PointDataModule(BaseDataModule):
         self.data_test = None
         self.data_val = None
 
+        # load data
+        try:
+            # self.batch_gen_train = xr.open_dataset(PROCESSED_TRAIN_PATH,chunks=CHUNKS,
+            #   backend_kwargs={"storage_options": {"project": PROCESSED_PROJECT, "token": 'anon'}},engine="zarr")
+            self.batch_gen_train = xr.open_dataset(PROCESSED_TRAIN_DATA, chunks=CHUNKS)
+        except FileNotFoundError:
+            print(f"Train data file {self.full_train_file} not found")
+
+        # try:
+        #    testdata = xr.open_zarr(self.full_test_file)
+        # except FileNotFoundError:
+        #    print(f'Test data file {self.full_test_file} not found')
+
+        # store wl for later use
+        self.wl = self.batch_gen_train.wl.values
+
     def prepare_data(self, *args, **kwargs) -> None:
         """download data here"""
 
@@ -44,23 +61,6 @@ class PointDataModule(BaseDataModule):
         Read downloaded data
         Setup Datasets
         Split the dataset into train/val/test."""
-
-        # load data
-        try:
-            # self.batch_gen_train = xr.open_dataset(
-            #    PROCESSED_TRAIN_DATA,
-            #    chunks="auto",
-            #    backend_kwargs={"storage_options": {"project": "science-sharing", "token": "anon"}},
-            #    engine="zarr",
-            # )
-            self.batch_gen_train = xr.open_dataset(PROCESSED_TRAIN_DATA, chunks="auto")
-        except FileNotFoundError:
-            print(f"Train data file {self.full_train_file} not found")
-
-        # try:
-        #    testdata = xr.open_zarr(self.full_test_file)
-        # except FileNotFoundError:
-        #    print(f'Test data file {self.full_test_file} not found')
 
         dataset_size = self.batch_gen_train.dims[BATCHDIM]
 

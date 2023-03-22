@@ -42,6 +42,6 @@ def test_mae():
     # create rand torch tensor with shape (6, 4, 20)
     nrand = torch.rand(6, 4, 20)
 
-    pixel, mask = mae(nrand)
+    pixel, mask, *other = mae(nrand)
 
     assert pixel.shape == mask.shape

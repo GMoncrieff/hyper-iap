@@ -113,7 +113,15 @@ class MAE(nn.Module):
         mask_tokens = decoded_tokens[:, :num_masked]
         pred_pixel_values = self.to_pixels(mask_tokens)
 
-        return (pred_pixel_values, masked_patches)
+        return (
+            pred_pixel_values,
+            masked_patches,
+            patches,
+            batch_range,
+            masked_indices,
+            unmasked_indices,
+        )
+        # return (pred_pixel_values, masked_patches)
         # calculate reconstruction loss
 
         # recon_loss = F.mse_loss(pred_pixel_values, masked_patches)

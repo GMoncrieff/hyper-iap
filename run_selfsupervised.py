@@ -40,8 +40,9 @@ def main():
             --ssmodel_class=mae.MAE \
             --save_classifier \
             --data_class=xarray_module.XarrayDataModule \
-            --limit_val_batches=5 --limit_train_batches=5 --max_epochs=5 \
+            --limit_val_batches=25 --limit_train_batches=25 --max_epochs=5 \
             --wandb
+
     """
     pl.seed_everything(1234)
 
@@ -96,14 +97,7 @@ def main():
     # training
     # -----------
 
-    # trainer = pl.Trainer.from_argparse_args(args, callbacks=callbacks, logger=logger)
-    trainer = pl.Trainer(
-        limit_train_batches=5,
-        limit_val_batches=2,
-        max_epochs=2,
-        callbacks=callbacks,
-        logger=logger,
-    )
+    trainer = pl.Trainer.from_argparse_args(args, callbacks=callbacks, logger=logger)
     trainer.profiler = profiler
 
     trainer.fit(seq_model, datamodule=data)

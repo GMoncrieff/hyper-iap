@@ -63,6 +63,7 @@ class BaseDataModule(pl.LightningDataModule):
             "num_classes": self.num_classes,
             "num_bands": self.num_bands,
             "num_dim": self.num_dim,
+            "wl": self.wl,
         }
 
     def prepare_data(self, *args, **kwargs) -> None:
