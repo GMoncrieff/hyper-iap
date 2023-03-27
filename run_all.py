@@ -31,7 +31,7 @@ def main():
      Run an experiment.
      Sample command:
      ```
-     python run_all.py --model_class=vit.simpleVIT --ssmodel_class=mae.MAE
+     python run_all.py --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml
      ```
      For basic help documentation, run the command
      ```
