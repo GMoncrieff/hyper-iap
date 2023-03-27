@@ -65,7 +65,7 @@ def setup_parser(
     parser.add_argument(
         "--wandb",
         action="store_true",
-        default=True,
+        default=False,
         help="If passed, logs experiment results to Weights & Biases. Otherwise logs only to local Tensorboard.",
     )
     # pytorch profiling
