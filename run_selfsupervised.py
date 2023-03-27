@@ -40,7 +40,7 @@ def main():
             --ssmodel_class=mae.MAE \
             --save_classifier \
             --data_class=xarray_module.XarrayDataModule \
-            --limit_val_batches=25 --limit_train_batches=25 --max_epochs=5 \
+            --limit_val_batches=25 --limit_train_batches=25 --max_epochs=10 \
             --wandb
 
     """
