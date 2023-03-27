@@ -43,6 +43,7 @@ raw/
 hyper-old/
 #data/
 media/
+wandb/
 data/test_batched_torch.zarr/
 data/fran_pixsample.zarr/
 hyperiap/callbacks/wandb_table.py
