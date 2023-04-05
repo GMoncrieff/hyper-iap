@@ -46,7 +46,8 @@ def main():
         python run_all.py --model_class=vit.simpleVIT \
             --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5 \
             --log_every_n_steps=2 \
-            --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml
+            --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml \
+            --wandb
     """
     # seed random with datetime
     random.seed(datetime.now())
@@ -155,6 +156,9 @@ def main():
     # -----------
     # clean training
     # -----------
+
+    args.monitor = "val_loss_final"
+
     if args.wandb:
         wandb.init(id=run_id, resume="must")
 
@@ -169,7 +173,12 @@ def main():
 
     # setup callbacks
     callbacks, checkpoint_callback, profiler, logger = setup_callbacks(
-        args=args, log_dir=log_dir, model=seq_model, finetune=False, append="_clean"
+        args=args,
+        log_dir=log_dir,
+        model=seq_model,
+        finetune=False,
+        append="_clean",
+        log_metric=args.monitor,
     )
     if args.wandb:
         run_id = logger.version

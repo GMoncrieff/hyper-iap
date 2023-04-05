@@ -192,6 +192,7 @@ def setup_callbacks(
     finetune=False,
     append="",
     project="hyperiap",
+    log_metric="val_loss",
 ):
     """Set up callbacks for training, including logging, checkpointing, and early stopping."""
 
@@ -215,7 +216,7 @@ def setup_callbacks(
         checkpoint_callback = fts_supporters.FTSCheckpoint(
             save_top_k=1,
             filename=filename_run,
-            monitor="val_loss",
+            monitor=log_metric,
             mode="min",
             auto_insert_metric_name=False,
             dirpath=experiment_dir,
@@ -225,7 +226,7 @@ def setup_callbacks(
         checkpoint_callback = pl.pytorch.callbacks.ModelCheckpoint(
             save_top_k=1,
             filename=filename_run,
-            monitor="val_loss",
+            monitor=log_metric,
             mode="min",
             auto_insert_metric_name=False,
             dirpath=experiment_dir,
