@@ -85,12 +85,12 @@ class LitSelfSupervised(LitBaseModel):
             wandb_logger = self.logger.experiment
             patch = 4
             fig = self._plot_hyperspec(
-                pred_pixel,
-                masked_pixel,
-                patches,
-                batch_range,
-                masked_indices,
-                unmasked_indices,
+                pred_pixel.cpu(),
+                masked_pixel.cpu(),
+                patches.cpu(),
+                batch_range.cpu(),
+                masked_indices.cpu(),
+                unmasked_indices.cpu(),
                 self.data_config["wl"],
                 patch,
             )

@@ -2,7 +2,7 @@ from argparse import ArgumentParser, Namespace
 import importlib
 from pathlib import Path
 import torch
-import pytorch_lightning as pl
+import lightning as pl
 
 from hyperiap.litmodels.litclassifier import LitClassifier
 from hyperiap.litmodels.litselfsupervised import LitSelfSupervised
@@ -54,22 +54,49 @@ def setup_parser(
 ):
     """Set up Python's ArgumentParser with data, model, trainer, and other arguments."""
     parser = ArgumentParser(add_help=False)
-
+    trainer_group = parser.add_argument_group("Trainer Args")
     # Add Trainer specific arguments, such as --max_epochs, --gpus, --precision
-    trainer_parser = pl.Trainer.add_argparse_args(parser)
-    trainer_parser._action_groups[1].title = "Trainer Args"
-    parser = ArgumentParser(add_help=False, parents=[trainer_parser])
-    parser.set_defaults(max_epochs=1)
+    trainer_group.add_argument(
+        "--limit_val_batches",
+        type=int,
+        default=2,
+        help="limit_val_batches",
+    )
+    trainer_group.add_argument(
+        "--limit_train_batches",
+        type=int,
+        default=2,
+        help="limit_train_batches",
+    )
+    trainer_group.add_argument(
+        "--max_epochs",
+        type=int,
+        default=2,
+        help="max epochs",
+    )
+    trainer_group.add_argument(
+        "--check_val_every_n_epoch",
+        type=int,
+        default=1,
+        help="check_val_every_n_epoch",
+    )
+    trainer_group.add_argument(
+        "--log_every_n_steps",
+        type=int,
+        default=2,
+        help="--log_every_n_steps=2",
+    )
 
+    setup_group = parser.add_argument_group("Setup Args")
     # wandb_logger
-    parser.add_argument(
+    setup_group.add_argument(
         "--wandb",
         action="store_true",
         default=False,
         help="If passed, logs experiment results to Weights & Biases. Otherwise logs only to local Tensorboard.",
     )
     # pytorch profiling
-    parser.add_argument(
+    setup_group.add_argument(
         "--profile",
         action="store_true",
         default=False,
@@ -77,35 +104,35 @@ def setup_parser(
     )
 
     # select data class
-    parser.add_argument(
+    setup_group.add_argument(
         "--data_class",
         type=str,
         default="xarray_module.XarrayDataModule",
         help=f"String identifier for the data class, relative to {data_module}.",
     )
     # select point class
-    parser.add_argument(
+    setup_group.add_argument(
         "--point_class",
         type=str,
         default="xarray_module.XarrayDataModule",
         help=f"String identifier for the point data class, relative to {point_module}.",
     )
     # select model class
-    parser.add_argument(
+    setup_group.add_argument(
         "--model_class",
         type=str,
         default="vit.simpleVIT",
         help=f"String identifier for the model class, relative to {model_module}.",
     )
     # select selfsupervised class
-    parser.add_argument(
+    setup_group.add_argument(
         "--ssmodel_class",
         type=str,
         default="mae.MAE",
         help=f"String identifier for the selfsup model class, relative to {ss_module}.",
     )
     # select transfer class
-    parser.add_argument(
+    setup_group.add_argument(
         "--transfer_class",
         type=str,
         default="vit.TransferLearningVIT",
@@ -113,14 +140,14 @@ def setup_parser(
     )
     # load ft shceudle
     # "hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml"
-    parser.add_argument(
+    setup_group.add_argument(
         "--ft_schedule",
         type=str,
         default=None,
         help="path to schedule for finetuing",
     )
     # early stopping
-    parser.add_argument(
+    setup_group.add_argument(
         "--stop_early",
         type=int,
         default=0,
@@ -129,6 +156,7 @@ def setup_parser(
 
     # Get the data and model classes, so that we can add their specific arguments
     temp_args, _ = parser.parse_known_args()
+
     # data_class = import_class(f"{data_module}.{temp_args.data_class}")
     # point_class = import_class(f"{point_module}.{temp_args.point_class}")
     model_class = import_class(f"{model_module}.{temp_args.model_class}")
@@ -168,11 +196,11 @@ def setup_callbacks(
     """Set up callbacks for training, including logging, checkpointing, and early stopping."""
 
     Path(log_dir).mkdir(parents=True, exist_ok=True)
-    logger = pl.loggers.TensorBoardLogger(log_dir)
+    logger = pl.pytorch.loggers.TensorBoardLogger(log_dir)
     experiment_dir = logger.log_dir
 
     if args.wandb:
-        logger = pl.loggers.WandbLogger(
+        logger = pl.pytorch.loggers.WandbLogger(
             log_model=True, save_dir=str(log_dir), job_type="train", project=project
         )
         logger.watch(model, log_freq=max(50, args.log_every_n_steps))
@@ -194,7 +222,7 @@ def setup_callbacks(
             every_n_epochs=args.check_val_every_n_epoch,
         )
     else:
-        checkpoint_callback = pl.callbacks.ModelCheckpoint(
+        checkpoint_callback = pl.pytorch.callbacks.ModelCheckpoint(
             save_top_k=1,
             filename=filename_run,
             monitor="val_loss",
@@ -204,12 +232,14 @@ def setup_callbacks(
             every_n_epochs=args.check_val_every_n_epoch,
         )
 
-    summary_callback = pl.callbacks.ModelSummary(max_depth=2)
-    learning_rate_callback = pl.callbacks.LearningRateMonitor(logging_interval="step")
+    summary_callback = pl.pytorch.callbacks.ModelSummary(max_depth=2)
+    learning_rate_callback = pl.pytorch.callbacks.LearningRateMonitor(
+        logging_interval="step"
+    )
     callbacks = [summary_callback, learning_rate_callback]
 
     if args.stop_early:
-        early_stopping_callback = pl.callbacks.EarlyStopping(
+        early_stopping_callback = pl.pytorch.callbacks.EarlyStopping(
             monitor="val_loss", mode="min", patience=args.stop_early
         )
         callbacks.append(early_stopping_callback)
@@ -223,11 +253,11 @@ def setup_callbacks(
     # -----------
     if args.profile:
         sched = torch.profiler.schedule(wait=0, warmup=3, active=4, repeat=0)
-        profiler = pl.profilers.PyTorchProfiler(
+        profiler = pl.pytorch.profilers.PyTorchProfiler(
             export_to_chrome=True, schedule=sched, dirpath=experiment_dir
         )
         profiler.STEP_FUNCTIONS = {"training_step"}  # only profile training
     else:
-        profiler = pl.profilers.PassThroughProfiler()
+        profiler = pl.pytorch.profilers.PassThroughProfiler()
 
     return callbacks, checkpoint_callback, profiler, logger

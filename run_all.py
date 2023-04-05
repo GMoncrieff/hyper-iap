@@ -1,6 +1,7 @@
 from pathlib import Path
 
-import pytorch_lightning as pl
+import argparse
+import lightning as pl
 import torch
 import numpy as np
 import wandb
@@ -57,6 +58,13 @@ def main():
     )
     args = parser.parse_args()
 
+    # split args into groups
+    arg_groups = {}
+
+    for group in parser._action_groups:
+        group_dict = {a.dest: getattr(args, a.dest, None) for a in group._group_actions}
+        arg_groups[group.title] = argparse.Namespace(**group_dict)
+
     if args.ft_schedule is None:
         raise ValueError("Must provide a finetuning schedule")
 
@@ -74,8 +82,9 @@ def main():
     ss_model_class = LitSelfSupervised
     log_dir = Path("training") / "logs"
 
-    wandb.init(project="hyperiap")
-    run_id = wandb.run.id
+    if args.wandb:
+        wandb.init(project="hyperiap")
+        run_id = wandb.run.id
 
     # -----------
     # ss model
@@ -90,7 +99,9 @@ def main():
     callbacks.append(checkpoint_callback)
 
     # fit
-    trainer = pl.Trainer.from_argparse_args(args, callbacks=callbacks, logger=logger)
+    trainer = pl.Trainer(
+        **vars(arg_groups["Trainer Args"]), callbacks=callbacks, logger=logger
+    )
     trainer.profiler = profiler
     trainer.fit(seq_ss_model, datamodule=data)
 
@@ -101,7 +112,11 @@ def main():
     litclass = seq_model_class(seq_ss_model.model.encoder)
     trainer = pl.Trainer(limit_val_batches=0, enable_checkpointing=False, logger=False)
     trainer.validate(litclass, datamodule=data)
-    ss_checkpoint = logger.experiment.dir + "/ss_classifier.ckpt"
+    if args.wandb:
+        ss_checkpoint = logger.experiment.dir + "/ss_classifier.ckpt"
+    else:
+        ss_checkpoint = logger.log_dir + "/ss_classifier.ckpt"
+
     trainer.save_checkpoint(ss_checkpoint)
 
     # end wandb experiment
@@ -110,7 +125,8 @@ def main():
     # -----------
     # noisy training
     # -----------
-    wandb.init(id=run_id, resume="must")
+    if args.wandb:
+        wandb.init(id=run_id, resume="must")
 
     seq_model = seq_model_class.load_from_checkpoint(
         ss_checkpoint, args=args, model=model
@@ -120,11 +136,15 @@ def main():
     callbacks, checkpoint_callback, profiler, logger = setup_callbacks(
         args=args, log_dir=log_dir, model=seq_model, finetune=False, append="_noisy"
     )
-    run_id = logger.version
+    if args.wandb:
+        run_id = logger.version
+
     callbacks.append(checkpoint_callback)
 
     # train on noisy lables
-    trainer = pl.Trainer.from_argparse_args(args, callbacks=callbacks, logger=logger)
+    trainer = pl.Trainer(
+        **vars(arg_groups["Trainer Args"]), callbacks=callbacks, logger=logger
+    )
     trainer.profiler = profiler
     trainer.fit(seq_model, datamodule=data)
 
@@ -135,7 +155,8 @@ def main():
     # -----------
     # clean training
     # -----------
-    wandb.init(id=run_id, resume="must")
+    if args.wandb:
+        wandb.init(id=run_id, resume="must")
 
     seq_model = seq_model_class.load_from_checkpoint(
         noisy_checkpoint, args=args, model=model
@@ -150,17 +171,21 @@ def main():
     callbacks, checkpoint_callback, profiler, logger = setup_callbacks(
         args=args, log_dir=log_dir, model=seq_model, finetune=False, append="_clean"
     )
-    run_id = logger.version
+    if args.wandb:
+        run_id = logger.version
+
     callbacks.append(checkpoint_callback)
 
     # train on clean lables
-    trainer = pl.Trainer.from_argparse_args(args, callbacks=callbacks, logger=logger)
+    trainer = pl.Trainer(
+        **vars(arg_groups["Trainer Args"]), callbacks=callbacks, logger=logger
+    )
     trainer.profiler = profiler
     # trainer.fit(seq_model, datamodule=data)
     trainer.fit(seq_model, datamodule=point)
 
     trainer.profiler = (
-        pl.profilers.PassThroughProfiler()
+        pl.pytorch.profilers.PassThroughProfiler()
     )  # turn profiling off during testing
 
     best_model_path = checkpoint_callback.best_model_path
@@ -172,10 +197,11 @@ def main():
     # trainer.test(seq_model, datamodule=data)
 
     # create a random number
-    random_number = random.randint(1, 100000)
-    wandb.log({"test_loss": random_number})
-    # end wandb experiment
-    wandb.finish()
+    if args.wandb:
+        random_number = random.randint(1, 100000)
+        wandb.log({"test_loss": random_number})
+        # end wandb experiment
+        wandb.finish()
 
 
 if __name__ == "__main__":
