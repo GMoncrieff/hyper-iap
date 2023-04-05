@@ -59,6 +59,9 @@ points = points[~points["class"].isin(["rock", "shade", "Pine"])]
 le = LabelEncoder()
 points["label"] = le.fit_transform(points["class"])
 
+# drop na labels
+points = points.query("label != 9")
+
 # get neighbour pixels
 #####################
 

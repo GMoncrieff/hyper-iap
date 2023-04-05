@@ -10,7 +10,8 @@ from os.path import dirname, abspath
 import xarray as xr
 
 SPLIT = 0.2
-N_CLASS = 52
+# 0 -> 52
+N_CLASS = 53
 N_BAND = 267
 N_DIM = 9
 BATCH_SIZE = 1

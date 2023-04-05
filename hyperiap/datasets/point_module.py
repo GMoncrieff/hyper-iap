@@ -10,14 +10,15 @@ import xarray as xr
 BATCH_SIZE = 32
 
 SPLIT = 0.2
-N_CLASS = 13
+# 0->9
+N_CLASS = 9
 N_BAND = 267
 N_DIM = 9
 
 # PROCESSED_TRAIN_DATA = "gcs://fran-share/fran_pixsample.zarr"
 # PROCESSED_TEST_DATA = "gcs://fran-share/fran_pixsample.zarr"
 PROCESSED_TRAIN_DATA = "data/test_fran_pixsample.zarr"
-# PROCESSED_TEST_DATA = "data/fran_pixsample.zarr"
+# PROCESSED_TEST_DATA = "data/fran_pixels.zarr"
 WLDIM, ZDIM, BATCHDIM = "wl", "z", "index"
 CHUNKS = {ZDIM: -1, WLDIM: -1, BATCHDIM: 100}
 

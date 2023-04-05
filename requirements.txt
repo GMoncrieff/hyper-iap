@@ -21,3 +21,5 @@ geopandas
 finetuning-scheduler
 dask-ml
 wandb
+tensorflow
+tensorboard
