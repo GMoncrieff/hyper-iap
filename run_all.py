@@ -57,6 +57,13 @@ def main():
         data_module=DATA_CLASS_MODULE,
         point_module=DATA_CLASS_MODULE,
     )
+    # learning rate modifier
+    parser.add_argument(
+        "--lr_modifier",
+        type=float,
+        default=1.0,
+        help="modifier for learning rate",
+    )
     args = parser.parse_args()
 
     # split args into groups
@@ -158,6 +165,9 @@ def main():
     # -----------
 
     args.monitor = "val_loss_final"
+
+    # modify learning rate
+    args.lr = args.lr * args.lr_modifier
 
     if args.wandb:
         wandb.init(id=run_id, resume="must")
