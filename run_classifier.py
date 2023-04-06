@@ -1,6 +1,7 @@
 from pathlib import Path
+import argparse
 
-import pytorch_lightning as pl
+import lightning as pl
 import torch
 import numpy as np
 
@@ -44,7 +45,7 @@ def main():
             --model_class=vit.simpleVIT \
             --data_class=xarray_module.XarrayDataModule \
             --limit_val_batches=5 --limit_train_batches=5 --max_epochs=10\
-            --wandb --log_every_n_steps=2
+            --wandb --log_every_n_steps=2 --monitor=val_loss_fin
 
     python run_classifier.py --model_class=vit.simpleVIT \
             --data_class=xarray_module.XarrayDataModule \
@@ -112,20 +113,32 @@ def main():
 
     # setup callbacks
     callbacks, checkpoint_callback, profiler, logger = setup_callbacks(
-        args=args, log_dir=log_dir, model=seq_model, finetune=args.finetune
+        args=args,
+        log_dir=log_dir,
+        model=seq_model,
+        finetune=args.finetune,
+        log_metric=args.monitor,
     )
     callbacks.append(checkpoint_callback)
 
     # -----------
     # training
     # -----------
-    trainer = pl.Trainer.from_argparse_args(args, callbacks=callbacks, logger=logger)
+    arg_groups = {}
+
+    for group in parser._action_groups:
+        group_dict = {a.dest: getattr(args, a.dest, None) for a in group._group_actions}
+        arg_groups[group.title] = argparse.Namespace(**group_dict)
+
+    trainer = pl.Trainer(
+        **vars(arg_groups["Trainer Args"]), callbacks=callbacks, logger=logger
+    )
     trainer.profiler = profiler
 
     trainer.fit(seq_model, datamodule=data)
 
     trainer.profiler = (
-        pl.profilers.PassThroughProfiler()
+        pl.pytorch.profilers.PassThroughProfiler()
     )  # turn profiling off during testing
 
     best_model_path = checkpoint_callback.best_model_path

@@ -10,7 +10,8 @@ from os.path import dirname, abspath
 import xarray as xr
 
 SPLIT = 0.2
-N_CLASS = 52
+# 0 -> 52
+N_CLASS = 53
 N_BAND = 267
 N_DIM = 9
 BATCH_SIZE = 1
@@ -38,15 +39,6 @@ class XarrayDataModule(BaseDataModule):
         self.data_test = None
         self.data_val = None
 
-    def prepare_data(self, *args, **kwargs) -> None:
-        """download data here"""
-
-    def setup(self, stage: Optional[str] = None):
-        """
-        Read data from cloud storage
-        Setup Datasets
-        Split the dataset into train/val/test."""
-
         # load data
         try:
             # self.batch_gen_train = xr.open_dataset(PROCESSED_TRAIN_PATH,chunks=CHUNKS,
@@ -60,12 +52,24 @@ class XarrayDataModule(BaseDataModule):
         # except FileNotFoundError:
         #    print(f'Test data file {self.full_test_file} not found')
 
+        # store wl for later use
+        self.wl = self.batch_gen_train.wl.values
+
+    def prepare_data(self, *args, **kwargs) -> None:
+        """download data here"""
+
+    def setup(self, stage: Optional[str] = None):
+        """
+        Read data from cloud storage
+        Setup Datasets
+        Split the dataset into train/val/test."""
+
         dataset_size = (self.batch_gen_train.dims[BATCHDIM] // CHUNKS[BATCHDIM]) - 1
 
         traindata = XarrayDataset(
             self.batch_gen_train, BATCHDIM, dataset_size, CHUNKS[BATCHDIM]
         )
-        # self.data_test=traindata = XarrayDataset(self.batch_gen_test)
+        # self.data_test = XarrayDataset(self.batch_gen_test)
 
         split = int(np.floor(self.split * dataset_size))
 

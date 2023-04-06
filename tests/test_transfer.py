@@ -1,4 +1,4 @@
-from pytorch_lightning import Trainer, seed_everything
+from lightning import Trainer, seed_everything
 from finetuning_scheduler import FinetuningScheduler
 
 from hyperiap.models.vit import simpleVIT, TransferLearningVIT

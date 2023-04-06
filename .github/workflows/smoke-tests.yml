@@ -1,4 +1,4 @@
-name: CI testing
+name: smoke-tests
 
 # see: https://help.github.com/en/actions/reference/events-that-trigger-workflows
 on:
@@ -36,13 +36,15 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    - name: Generate Report
+    - name: Test classifier
       run: |
-        coverage run -m pytest
-        pwd
-        coverage xml -i -o test-results-${{ matrix.python-version }}.xml
+        python run_classifier.py --limit_val_batches=5 --limit_train_batches=5 --max_epochs=2
 
-    - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v2
-      with:
-        files: test-results-${{ matrix.python-version }}.xml
+    - name: Test self-supervised
+      run: |
+        python run_selfsupervised.py --limit_val_batches=5 --limit_train_batches=5 --max_epochs=2
+        
+    - name: Test run all
+      run: |
+        python run_all.py --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml --limit_val_batches=5 --limit_train_batches=5 --max_epochs=2
+        

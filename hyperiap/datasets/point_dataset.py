@@ -7,6 +7,7 @@ import numpy as np
 
 PREDICTOR_VAR = "reflectance"
 LABEL_VAR = "recode"
+# LABEL_VAR = "label"
 
 
 class PointDataset(Dataset):

@@ -8,6 +8,7 @@ from hyperiap.litmodels.litbasemodel import LitBaseModel
 LR = 1e-3
 T_0 = 2
 LOSS = "cross_entropy"
+MONITOR = "val_loss"
 
 
 class LitClassifier(LitBaseModel):
@@ -19,6 +20,7 @@ class LitClassifier(LitBaseModel):
         self.data_config = self.model.data_config
 
         self.lr = self.args.get("lr", LR)
+        self.monitor = self.args.get("monitor", MONITOR)
 
         loss = self.args.get("loss", LOSS)
         self.loss_fn = getattr(torch.nn.functional, loss)
@@ -69,7 +71,7 @@ class LitClassifier(LitBaseModel):
         loss = self.loss_fn(logits, y)
         self.val_acc(logits, y)
 
-        self.log("val_loss", loss, prog_bar=True, sync_dist=True)
+        self.log(self.monitor, loss, prog_bar=True, sync_dist=True)
         self.log("val_acc", self.val_acc, on_step=False, on_epoch=True, prog_bar=True)
 
         outputs = {"loss": loss}
@@ -92,6 +94,7 @@ class LitClassifier(LitBaseModel):
     def add_to_argparse(parser):
         parser.add_argument("--lr", type=float, default=LR)
         parser.add_argument("--T_0", type=float, default=T_0)
+        parser.add_argument("--monitor", type=str, default=MONITOR)
         parser.add_argument(
             "--loss",
             type=str,
