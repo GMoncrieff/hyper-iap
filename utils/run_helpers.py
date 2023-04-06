@@ -84,7 +84,13 @@ def setup_parser(
         "--log_every_n_steps",
         type=int,
         default=2,
-        help="--log_every_n_steps=2",
+        help="--log_every_n_steps",
+    )
+    trainer_group.add_argument(
+        "--precision",
+        type=int,
+        default=32,
+        help="--precision",
     )
 
     setup_group = parser.add_argument_group("Setup Args")
