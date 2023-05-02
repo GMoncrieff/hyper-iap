@@ -139,6 +139,7 @@ def main():
     # noisy training
     # -----------
     args.monitor = "noisy_"
+    args.label_smooth = 0.1
 
     if args.wandb:
         wandb.init(id=run_id, resume="must")
@@ -182,7 +183,7 @@ def main():
     args.lr = args.lr * args.lr_modifier
 
     # modify learning rate
-    args.lr = args.lr * args.lr_modifier
+    args.label_smooth = 0.0
 
     if args.wandb:
         wandb.init(id=run_id, resume="must")

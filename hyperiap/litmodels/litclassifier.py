@@ -9,6 +9,7 @@ LR = 1e-3
 T_0 = 2
 LOSS = "cross_entropy"
 MONITOR = ""
+LABEL_SMOOTH = 0.0
 
 
 class LitClassifier(LitBaseModel):
@@ -23,6 +24,7 @@ class LitClassifier(LitBaseModel):
         self.monitor = self.args.get("monitor", MONITOR)
 
         loss = self.args.get("loss", LOSS)
+        self.label_smooth = self.args.get("label_smooth", LABEL_SMOOTH)
         self.loss_fn = getattr(torch.nn.functional, loss)
 
         self.T_0 = self.args.get("T_0", T_0)
@@ -52,7 +54,7 @@ class LitClassifier(LitBaseModel):
         x = rearrange(x, "b1 b2 z c -> (b1 b2) z c")
 
         logits = self(x)
-        loss = self.loss_fn(logits, y)
+        loss = self.loss_fn(logits, y, label_smoothing=self.label_smooth)
         self.train_acc(logits, y)
 
         self.log(f"{self.monitor}train_loss", loss)
@@ -70,7 +72,7 @@ class LitClassifier(LitBaseModel):
         x = rearrange(x, "b1 b2 z c -> (b1 b2) z c")
 
         logits = self(x)
-        loss = self.loss_fn(logits, y)
+        loss = self.loss_fn(logits, y, label_smoothing=self.label_smooth)
         self.val_acc(logits, y)
 
         self.log(f"{self.monitor}val_loss", loss, prog_bar=True, sync_dist=True)
@@ -92,7 +94,7 @@ class LitClassifier(LitBaseModel):
         x = rearrange(x, "b1 b2 z c -> (b1 b2) z c")
 
         logits = self(x)
-        loss = self.loss_fn(logits, y)
+        loss = self.loss_fn(logits, y, label_smoothing=self.label_smooth)
         self.test_acc(logits, y)
 
         self.log(f"{self.monitor}test_loss", loss, on_step=False, on_epoch=True)
@@ -105,6 +107,7 @@ class LitClassifier(LitBaseModel):
         parser.add_argument("--lr", type=float, default=LR)
         parser.add_argument("--T_0", type=float, default=T_0)
         parser.add_argument("--monitor", type=str, default=MONITOR)
+        parser.add_argument("--label_smooth", type=float, default=LABEL_SMOOTH)
         parser.add_argument(
             "--loss",
             type=str,
