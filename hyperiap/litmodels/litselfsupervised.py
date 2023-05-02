@@ -13,6 +13,7 @@ LR_SS = 1e-3
 LOSS_SS = "mse_loss"
 T_0_SS = 2
 P_LENGTH = 6
+SS_MONITOR = "ss_"
 
 
 class LitSelfSupervised(LitBaseModel):
@@ -25,7 +26,7 @@ class LitSelfSupervised(LitBaseModel):
 
         self.lr = self.args.get("lr_ss", LR_SS)
         self.wandb = self.args.get("wandb", False)
-
+        self.ss_monitor = self.args.get("ss_monitor", SS_MONITOR)
         loss = self.args.get("loss_ss", LOSS_SS)
         self.loss_fn = getattr(torch.nn.functional, loss)
 
@@ -57,7 +58,7 @@ class LitSelfSupervised(LitBaseModel):
         pred_pixel, masked_pixel, *other = self(x)
         loss = self.loss_fn(pred_pixel, masked_pixel)
 
-        self.log("train_loss", loss)
+        self.log(f"{self.ss_monitor}train_loss", loss)
 
         outputs = {"loss": loss}
 
@@ -79,7 +80,7 @@ class LitSelfSupervised(LitBaseModel):
         ) = self(x)
         loss = self.loss_fn(pred_pixel, masked_pixel)
 
-        self.log("val_loss", loss, prog_bar=True, sync_dist=True)
+        self.log(f"{self.ss_monitor}val_loss", loss, prog_bar=True, sync_dist=True)
 
         if self.wandb:
             wandb_logger = self.logger.experiment
@@ -107,7 +108,7 @@ class LitSelfSupervised(LitBaseModel):
         pred_pixel, masked_pixel, *other = self(x)
         loss = self.loss_fn(pred_pixel, masked_pixel)
 
-        self.log("test_loss", loss, on_step=False, on_epoch=True)
+        self.log(f"{self.ss_monitor}val_loss", loss, on_step=False, on_epoch=True)
 
         outputs = {"loss": loss}
 
@@ -247,6 +248,7 @@ class LitSelfSupervised(LitBaseModel):
     def add_to_argparse(parser):
         parser.add_argument("--lr_ss", type=float, default=LR_SS)
         parser.add_argument("--T_0_ss", type=float, default=T_0_SS)
+        parser.add_argument("--ss_monitor", type=str, default=SS_MONITOR)
         parser.add_argument(
             "--loss_ss",
             type=str,

@@ -8,7 +8,7 @@ from hyperiap.litmodels.litbasemodel import LitBaseModel
 LR = 1e-3
 T_0 = 2
 LOSS = "cross_entropy"
-MONITOR = "val_loss"
+MONITOR = ""
 
 
 class LitClassifier(LitBaseModel):
@@ -55,8 +55,10 @@ class LitClassifier(LitBaseModel):
         loss = self.loss_fn(logits, y)
         self.train_acc(logits, y)
 
-        self.log("train_loss", loss)
-        self.log("train_acc", self.train_acc, on_step=False, on_epoch=True)
+        self.log(f"{self.monitor}train_loss", loss)
+        self.log(
+            f"{self.monitor}train_acc", self.train_acc, on_step=False, on_epoch=True
+        )
 
         outputs = {"loss": loss}
 
@@ -71,8 +73,14 @@ class LitClassifier(LitBaseModel):
         loss = self.loss_fn(logits, y)
         self.val_acc(logits, y)
 
-        self.log(self.monitor, loss, prog_bar=True, sync_dist=True)
-        self.log("val_acc", self.val_acc, on_step=False, on_epoch=True, prog_bar=True)
+        self.log(f"{self.monitor}val_loss", loss, prog_bar=True, sync_dist=True)
+        self.log(
+            f"{self.monitor}val_acc",
+            self.val_acc,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
 
         outputs = {"loss": loss}
 
@@ -87,8 +95,10 @@ class LitClassifier(LitBaseModel):
         loss = self.loss_fn(logits, y)
         self.test_acc(logits, y)
 
-        self.log("test_loss", loss, on_step=False, on_epoch=True)
-        self.log("test_acc", self.test_acc, on_step=False, on_epoch=True)
+        self.log(f"{self.monitor}test_loss", loss, on_step=False, on_epoch=True)
+        self.log(
+            f"{self.monitor}test_loss", self.test_acc, on_step=False, on_epoch=True
+        )
 
     @staticmethod
     def add_to_argparse(parser):

@@ -48,4 +48,4 @@ def test_mae_decoder():
     trainer.fit(model, datamodule=xmod)
     x = trainer.validate(datamodule=xmod)
 
-    assert x[0]["val_loss"] >= 0
+    assert x[0]["ss_val_loss"] >= 0

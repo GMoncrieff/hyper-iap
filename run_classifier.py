@@ -45,7 +45,7 @@ def main():
             --model_class=vit.simpleVIT \
             --data_class=xarray_module.XarrayDataModule \
             --limit_val_batches=5 --limit_train_batches=5 --max_epochs=10\
-            --wandb --log_every_n_steps=2 --monitor=val_loss_fin
+            --wandb --log_every_n_steps=2 --monitor=try_
 
     python run_classifier.py --model_class=vit.simpleVIT \
             --data_class=xarray_module.XarrayDataModule \
@@ -117,7 +117,7 @@ def main():
         log_dir=log_dir,
         model=seq_model,
         finetune=args.finetune,
-        log_metric=args.monitor,
+        log_metric=f"{args.monitor}val_loss",
     )
     callbacks.append(checkpoint_callback)
 
