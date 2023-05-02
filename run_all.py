@@ -102,7 +102,12 @@ def main():
 
     # setup callbacks
     callbacks, checkpoint_callback, profiler, logger = setup_callbacks(
-        args=args, log_dir=log_dir, model=seq_ss_model, finetune=False, append="_ss"
+        args=args,
+        log_dir=log_dir,
+        model=seq_ss_model,
+        finetune=False,
+        append="_ss",
+        log_metric=f"{args.ss_monitor}val_loss",
     )
     callbacks.append(checkpoint_callback)
 
@@ -133,6 +138,8 @@ def main():
     # -----------
     # noisy training
     # -----------
+    args.monitor = "noisy_"
+
     if args.wandb:
         wandb.init(id=run_id, resume="must")
 
@@ -142,7 +149,12 @@ def main():
 
     # setup callbacks
     callbacks, checkpoint_callback, profiler, logger = setup_callbacks(
-        args=args, log_dir=log_dir, model=seq_model, finetune=False, append="_noisy"
+        args=args,
+        log_dir=log_dir,
+        model=seq_model,
+        finetune=False,
+        append="_noisy",
+        log_metric=f"{args.monitor}val_loss",
     )
     if args.wandb:
         run_id = logger.version
@@ -164,7 +176,7 @@ def main():
     # clean training
     # -----------
 
-    args.monitor = "val_loss_final"
+    args.monitor = "final_"
 
     # modify learning rate
     args.lr = args.lr * args.lr_modifier
@@ -188,7 +200,7 @@ def main():
         model=seq_model,
         finetune=False,
         append="_clean",
-        log_metric=args.monitor,
+        log_metric=f"{args.monitor}val_loss",
     )
     if args.wandb:
         run_id = logger.version

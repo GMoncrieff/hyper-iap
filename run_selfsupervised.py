@@ -90,7 +90,10 @@ def main():
 
     # setup callbacks
     callbacks, checkpoint_callback, profiler, logger = setup_callbacks(
-        args=args, log_dir=log_dir, model=seq_model
+        args=args,
+        log_dir=log_dir,
+        model=seq_model,
+        log_metric=f"{args.ss_monitor}val_loss",
     )
     callbacks.append(checkpoint_callback)
 
