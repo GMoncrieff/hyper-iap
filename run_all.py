@@ -46,6 +46,7 @@ def main():
         python run_all.py --model_class=vit.simpleVIT \
             --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5 \
             --log_every_n_steps=2 \
+            --lr_ft=0.00001 \
             --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml \
             --wandb
     """
@@ -147,6 +148,9 @@ def main():
     # noisy training
     # -----------
     args.monitor = "noisy_"
+
+    # change label smoothing
+    ls_default = args.label_smooth
     args.label_smooth = args.ls_modifier
 
     if args.wandb:
@@ -191,7 +195,8 @@ def main():
     args.lr = args.lr * args.lr_modifier
 
     # modify learning rate
-    args.label_smooth = 0.0
+    ls_default = args.label_smooth
+    args.label_smooth = ls_default
 
     if args.wandb:
         wandb.init(id=run_id, resume="must")
@@ -210,7 +215,7 @@ def main():
         args=args,
         log_dir=log_dir,
         model=seq_model,
-        finetune=False,
+        finetune=True,
         append="_clean",
         log_metric=f"{args.monitor}val_loss",
     )
