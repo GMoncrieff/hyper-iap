@@ -64,6 +64,14 @@ def main():
         default=1.0,
         help="modifier for learning rate",
     )
+    # labels moothing modifier
+    parser.add_argument(
+        "--ls_modifier",
+        type=float,
+        default=0.2,
+        help="modifier for label smoothing when training on noisy labels",
+    )
+
     args = parser.parse_args()
 
     # split args into groups
@@ -139,7 +147,7 @@ def main():
     # noisy training
     # -----------
     args.monitor = "noisy_"
-    args.label_smooth = 0.1
+    args.label_smooth = args.ls_modifier
 
     if args.wandb:
         wandb.init(id=run_id, resume="must")
