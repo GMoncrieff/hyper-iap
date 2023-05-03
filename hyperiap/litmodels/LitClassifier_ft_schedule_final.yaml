@@ -1,13 +1,13 @@
 0:
-  max_transition_epoch: -1
+  max_transition_epoch: 5
   params:
   - model.linear_head.0.weight
   - model.linear_head.0.bias
   - model.linear_head.1.weight
   - model.linear_head.1.bias
 1:
-  lr: 1.0e-05
-  max_transition_epoch: -1
+  lr: 0.005
+  max_transition_epoch: 20
   params:
   - model.embedding.pos_embedding
   - model.embedding.to_patch_embedding.1.weight

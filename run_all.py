@@ -46,7 +46,7 @@ def main():
         python run_all.py --model_class=vit.simpleVIT \
             --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5 \
             --log_every_n_steps=2 \
-            --lr_ft=0.00001 \
+            --lr_ft=10000 \
             --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml \
             --wandb
     """
@@ -189,7 +189,7 @@ def main():
     # clean training
     # -----------
 
-    args.monitor = "final_"
+    args.monitor = "clean_"
 
     # modify learning rate
     args.lr = args.lr * args.lr_modifier

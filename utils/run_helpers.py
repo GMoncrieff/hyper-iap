@@ -276,7 +276,7 @@ def setup_callbacks(
         ft_callback = FinetuningScheduler(
             ft_schedule=temp_file.name,
             base_max_lr=args.lr,
-            epoch_transitions_only=False,
+            epoch_transitions_only=True,
         )
         callbacks.append(ft_callback)
 
