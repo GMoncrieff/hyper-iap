@@ -1,4 +1,6 @@
 from argparse import ArgumentParser, Namespace
+import yaml
+import tempfile
 import importlib
 from pathlib import Path
 import torch
@@ -149,8 +151,15 @@ def setup_parser(
     setup_group.add_argument(
         "--ft_schedule",
         type=str,
-        default=None,
+        default="hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml",
         help="path to schedule for finetuing",
+    )
+    # lr finetune
+    setup_group.add_argument(
+        "--lr_ft",
+        type=float,
+        default=1000,
+        help="finetuing learning rate",
     )
     # early stopping
     setup_group.add_argument(
@@ -247,12 +256,30 @@ def setup_callbacks(
 
     if args.stop_early:
         early_stopping_callback = pl.pytorch.callbacks.EarlyStopping(
-            monitor="val_loss", mode="min", patience=args.stop_early
+            monitor=log_metric, mode="min", patience=args.stop_early
         )
         callbacks.append(early_stopping_callback)
 
     if finetune:
-        ft_callback = FinetuningScheduler(ft_schedule=args.ft_schedule)
+        # open ft schedule and change lr
+        with open(args.ft_schedule, "r") as file:
+            data = yaml.safe_load(file)
+            data[0]["max_transition_epoch"] = int(args.max_epochs / 2)
+            data[1]["max_transition_epoch"] = args.max_epochs
+            data[1]["lr"] = args.lr_ft
+
+        # create tempfile with new lr
+        with tempfile.NamedTemporaryFile(
+            "w", delete=False, suffix=".yaml"
+        ) as temp_file:
+            yaml.safe_dump(data, temp_file)
+
+        # setup caback
+        ft_callback = FinetuningScheduler(
+            ft_schedule=temp_file.name,
+            base_max_lr=args.lr,
+            epoch_transitions_only=True,
+        )
         callbacks.append(ft_callback)
 
     # -----------
