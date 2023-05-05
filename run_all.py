@@ -49,6 +49,14 @@ def main():
             --lr_ft=10000 \
             --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml \
             --wandb
+
+        python run_all.py --model_class=vit.simpleVIT \
+            --limit_val_batches=5 --limit_train_batches=10 \
+            --max_epochs_ss=6 --max_epochs_noisy=6 --max_epochs_clean=6 \
+            --log_every_n_steps=1 \
+            --lr_ft=0.01 \
+            --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml \
+            --wandb
     """
     # seed random with datetime
     random.seed(datetime.now())
@@ -58,19 +66,47 @@ def main():
         data_module=DATA_CLASS_MODULE,
         point_module=DATA_CLASS_MODULE,
     )
-    # learning rate modifier
-    parser.add_argument(
-        "--lr_modifier",
-        type=float,
-        default=1.0,
-        help="modifier for learning rate",
-    )
     # labels moothing modifier
     parser.add_argument(
         "--ls_modifier",
         type=float,
         default=0.2,
         help="modifier for label smoothing when training on noisy labels",
+    )
+    # ss stage epochs
+    parser.add_argument(
+        "--max_epochs_ss",
+        type=int,
+        default=0,
+        help="num epochs to train ss model",
+    )
+    # noisy stage epochs
+    parser.add_argument(
+        "--max_epochs_noisy",
+        type=int,
+        default=0,
+        help="num epochs to train noisy model",
+    )
+    # clean stage epochs
+    parser.add_argument(
+        "--max_epochs_clean",
+        type=int,
+        default=0,
+        help="num epochs to train clean model",
+    )
+    # do we run ss training
+    parser.add_argument(
+        "--run_ss",
+        action="store_true",
+        default=True,
+        help="run ss training",
+    )
+    # do we run noisy training
+    parser.add_argument(
+        "--run_noisy",
+        action="store_true",
+        default=True,
+        help="run noisy training",
     )
 
     args = parser.parse_args()
@@ -88,9 +124,15 @@ def main():
     data, point = setup_data_from_args(
         args, data_module=DATA_CLASS_MODULE, point_module=DATA_CLASS_MODULE
     )
-    model, ssmodel = setup_models_from_args(
-        args, data, ss_module=MODEL_CLASS_MODULE, model_module=MODEL_CLASS_MODULE
-    )
+
+    if args.run_ss:
+        model, ssmodel = setup_models_from_args(
+            args, data, ss_module=MODEL_CLASS_MODULE, model_module=MODEL_CLASS_MODULE
+        )
+    else:
+        model, _ = setup_models_from_args(
+            args, data, ss_module=MODEL_CLASS_MODULE, model_module=MODEL_CLASS_MODULE
+        )
 
     # -----------
     # setup models
@@ -103,87 +145,118 @@ def main():
         wandb.init(project="hyperiap")
         run_id = wandb.run.id
 
-    # -----------
-    # ss model
-    # -----------
-
-    seq_ss_model = ss_model_class(args=args, model=ssmodel)
-
-    # setup callbacks
-    callbacks, checkpoint_callback, profiler, logger = setup_callbacks(
-        args=args,
-        log_dir=log_dir,
-        model=seq_ss_model,
-        finetune=False,
-        append="_ss",
-        log_metric=f"{args.ss_monitor}val_loss",
-    )
-    callbacks.append(checkpoint_callback)
-
-    # fit
-    trainer = pl.Trainer(
-        **vars(arg_groups["Trainer Args"]), callbacks=callbacks, logger=logger
-    )
-    trainer.profiler = profiler
-    trainer.fit(seq_ss_model, datamodule=data)
-
-    # save best model in useable format
-    seq_ss_model = ss_model_class.load_from_checkpoint(
-        checkpoint_callback.best_model_path, args=args, model=ssmodel
-    )
-    litclass = seq_model_class(seq_ss_model.model.encoder)
-    trainer = pl.Trainer(limit_val_batches=0, enable_checkpointing=False, logger=False)
-    trainer.validate(litclass, datamodule=data)
-    if args.wandb:
-        ss_checkpoint = logger.experiment.dir + "/ss_classifier.ckpt"
-    else:
-        ss_checkpoint = logger.log_dir + "/ss_classifier.ckpt"
-
-    trainer.save_checkpoint(ss_checkpoint)
-
-    # end wandb experiment
-    # wandb.finish()
-
-    # -----------
-    # noisy training
-    # -----------
-    args.monitor = "noisy_"
-
-    # change label smoothing
+    # store unmodified args
     ls_default = args.label_smooth
-    args.label_smooth = args.ls_modifier
+    max_epochs_orig = arg_groups["Trainer Args"].max_epochs
 
-    if args.wandb:
-        wandb.init(id=run_id, resume="must")
+    if args.run_ss:
 
-    seq_model = seq_model_class.load_from_checkpoint(
-        ss_checkpoint, args=args, model=model
-    )
+        # -----------
+        # ss model
+        # -----------
 
-    # setup callbacks
-    callbacks, checkpoint_callback, profiler, logger = setup_callbacks(
-        args=args,
-        log_dir=log_dir,
-        model=seq_model,
-        finetune=False,
-        append="_noisy",
-        log_metric=f"{args.monitor}val_loss",
-    )
-    if args.wandb:
-        run_id = logger.version
+        # stage specifc epochs
+        if args.max_epochs_ss > 0:
+            arg_groups["Trainer Args"].max_epochs = args.max_epochs_ss
+            args.max_epochs = args.max_epochs_ss
+        else:
+            arg_groups["Trainer Args"].max_epochs = max_epochs_orig
+            args.max_epochs = max_epochs_orig
 
-    callbacks.append(checkpoint_callback)
+        seq_ss_model = ss_model_class(args=args, model=ssmodel)
 
-    # train on noisy lables
-    trainer = pl.Trainer(
-        **vars(arg_groups["Trainer Args"]), callbacks=callbacks, logger=logger
-    )
-    trainer.profiler = profiler
-    trainer.fit(seq_model, datamodule=data)
+        # setup callbacks
+        callbacks, checkpoint_callback, profiler, logger = setup_callbacks(
+            args=args,
+            log_dir=log_dir,
+            model=seq_ss_model,
+            finetune=False,
+            append="_ss",
+            log_metric=f"{args.ss_monitor}val_loss",
+        )
+        callbacks.append(checkpoint_callback)
+        # fit
+        trainer = pl.Trainer(
+            **vars(arg_groups["Trainer Args"]), callbacks=callbacks, logger=logger
+        )
+        trainer.profiler = profiler
+        trainer.fit(seq_ss_model, datamodule=data)
 
-    noisy_checkpoint = checkpoint_callback.best_model_path
-    # end wandb experiment
-    # wandb.finish()
+        # save best model in useable format
+        seq_ss_model = ss_model_class.load_from_checkpoint(
+            checkpoint_callback.best_model_path, args=args, model=ssmodel
+        )
+        litclass = seq_model_class(seq_ss_model.model.encoder)
+        trainer = pl.Trainer(
+            limit_val_batches=0, enable_checkpointing=False, logger=False
+        )
+        trainer.validate(litclass, datamodule=data)
+        if args.wandb:
+            ss_checkpoint = logger.experiment.dir + "/ss_classifier.ckpt"
+        else:
+            ss_checkpoint = logger.log_dir + "/ss_classifier.ckpt"
+
+        trainer.save_checkpoint(ss_checkpoint)
+
+        # end wandb experiment
+        # wandb.finish()
+
+    if args.run_noisy:
+        # -----------
+        # noisy training
+        # -----------
+        args.monitor = "noisy_"
+
+        # change label smoothing
+        args.label_smooth = args.ls_modifier
+
+        # stage specifc epochs
+        if args.max_epochs_noisy > 0:
+            arg_groups["Trainer Args"].max_epochs = args.max_epochs_noisy
+            args.max_epochs = args.max_epochs_noisy
+        else:
+            arg_groups["Trainer Args"].max_epochs = max_epochs_orig
+            args.max_epochs = max_epochs_orig
+
+        if args.wandb:
+            wandb.init(id=run_id, resume="must")
+
+        # setup transfer model if finetuning
+        if args.run_ss:
+            seq_model = seq_model_class.load_from_checkpoint(
+                ss_checkpoint, args=args, model=model
+            )
+            transfer = setup_transfer_from_args(
+                args, seq_model.model, point, model_module=MODEL_CLASS_MODULE
+            )
+            seq_model = seq_model_class(args=args, model=transfer)
+        else:
+            seq_model = seq_model_class(args=args, model=model)
+
+        # setup callbacks
+        callbacks, checkpoint_callback, profiler, logger = setup_callbacks(
+            args=args,
+            log_dir=log_dir,
+            model=seq_model,
+            finetune=True,
+            append="_noisy",
+            log_metric=f"{args.monitor}val_loss",
+        )
+        if args.wandb:
+            run_id = logger.version
+
+        callbacks.append(checkpoint_callback)
+
+        # train on noisy lables
+        trainer = pl.Trainer(
+            **vars(arg_groups["Trainer Args"]), callbacks=callbacks, logger=logger
+        )
+        trainer.profiler = profiler
+        trainer.fit(seq_model, datamodule=data)
+
+        noisy_checkpoint = checkpoint_callback.best_model_path
+        # end wandb experiment
+        # wandb.finish()
 
     # -----------
     # clean training
@@ -192,23 +265,40 @@ def main():
     args.monitor = "clean_"
 
     # modify learning rate
-    args.lr = args.lr * args.lr_modifier
-
-    # modify learning rate
     ls_default = args.label_smooth
     args.label_smooth = ls_default
+
+    # stage specifc epochs
+    if args.max_epochs_clean > 0:
+        arg_groups["Trainer Args"].max_epochs = args.max_epochs_clean
+        args.max_epochs = args.max_epochs_clean
+    else:
+        arg_groups["Trainer Args"].max_epochs = max_epochs_orig
+        args.max_epochs = max_epochs_orig
 
     if args.wandb:
         wandb.init(id=run_id, resume="must")
 
-    seq_model = seq_model_class.load_from_checkpoint(
-        noisy_checkpoint, args=args, model=model
-    )
+    # setup transfer model if finetuning
+    if args.run_noisy:
+        seq_model = seq_model_class.load_from_checkpoint(
+            noisy_checkpoint, args=args, model=model
+        )
 
-    transfer = setup_transfer_from_args(
-        args, seq_model.model, point, model_module=MODEL_CLASS_MODULE
-    )
-    seq_model = seq_model_class(args=args, model=transfer)
+        transfer = setup_transfer_from_args(
+            args, seq_model.model, point, model_module=MODEL_CLASS_MODULE
+        )
+        seq_model = seq_model_class(args=args, model=transfer)
+    elif args.run_ss:
+        seq_model = seq_model_class.load_from_checkpoint(
+            ss_checkpoint, args=args, model=model
+        )
+        transfer = setup_transfer_from_args(
+            args, seq_model.model, point, model_module=MODEL_CLASS_MODULE
+        )
+        seq_model = seq_model_class(args=args, model=transfer)
+    else:
+        seq_model = seq_model_class(args=args, model=model)
 
     # setup callbacks
     callbacks, checkpoint_callback, profiler, logger = setup_callbacks(

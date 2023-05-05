@@ -158,7 +158,7 @@ def setup_parser(
     setup_group.add_argument(
         "--lr_ft",
         type=float,
-        default=1e-4,
+        default=1000,
         help="finetuing learning rate",
     )
     # early stopping
@@ -264,6 +264,8 @@ def setup_callbacks(
         # open ft schedule and change lr
         with open(args.ft_schedule, "r") as file:
             data = yaml.safe_load(file)
+            data[0]["max_transition_epoch"] = int(args.max_epochs / 2)
+            data[1]["max_transition_epoch"] = args.max_epochs
             data[1]["lr"] = args.lr_ft
 
         # create tempfile with new lr

@@ -7,7 +7,7 @@
   - model.linear_head.1.bias
 1:
   lr: 0.005
-  max_transition_epoch: 20
+  max_transition_epoch: 4
   params:
   - model.embedding.pos_embedding
   - model.embedding.to_patch_embedding.1.weight
