@@ -30,21 +30,28 @@ def setup_data_from_args(args: Namespace, data_module: str, point_module: str):
     return data, point
 
 
-def setup_models_from_args(args: Namespace, data, ss_module: str, model_module: str):
-    """setup pl models"""
-    model_class = import_class(f"{model_module}.{args.model_class}")
+def setup_ssmodel_from_args(args: Namespace, model: torch.nn.Module, ss_module: str):
+    """setup torch model"""
     ssmodel_class = import_class(f"{ss_module}.{args.ssmodel_class}")
-
-    model = model_class(data_config=data.config(), args=args)
     ssmodel = ssmodel_class(encoder=model, args=args)
 
-    return model, ssmodel
+    return ssmodel
+
+
+def setup_model_from_args(
+    args: Namespace, data: pl.LightningDataModule, model_module: str
+):
+    """setup torch model"""
+    model_class = import_class(f"{model_module}.{args.model_class}")
+    model = model_class(data_config=data.config(), args=args)
+
+    return model
 
 
 def setup_transfer_from_args(
     args: Namespace, model: torch.nn.Module, data, model_module: str
 ):
-    """setup pl model for trasnfer learning"""
+    """setup torch model for transfer learning"""
     transfer_class = import_class(f"{model_module}.{args.transfer_class}")
     transfer = transfer_class(model, data_config=data.config())
 
@@ -122,7 +129,7 @@ def setup_parser(
     setup_group.add_argument(
         "--point_class",
         type=str,
-        default="xarray_module.XarrayDataModule",
+        default="point_module.XarrayPointDataModule",
         help=f"String identifier for the point data class, relative to {point_module}.",
     )
     # select model class
