@@ -103,6 +103,62 @@ def setup_parser(
     )
 
     setup_group = parser.add_argument_group("Setup Args")
+    # labels moothing modifier
+    setup_group.add_argument(
+        "--ls_modifier",
+        type=float,
+        default=0.2,
+        help="modifier for label smoothing when training on noisy labels",
+    )
+    # ss stage epochs
+    setup_group.add_argument(
+        "--max_epochs_ss",
+        type=int,
+        default=0,
+        help="num epochs to train ss model",
+    )
+    # noisy stage epochs
+    setup_group.add_argument(
+        "--max_epochs_noisy",
+        type=int,
+        default=0,
+        help="num epochs to train noisy model",
+    )
+    # clean stage epochs
+    setup_group.add_argument(
+        "--max_epochs_clean",
+        type=int,
+        default=0,
+        help="num epochs to train clean model",
+    )
+    # do we run ss training
+    setup_group.add_argument(
+        "--run_ss",
+        action="store_true",
+        default=True,
+        help="run ss training",
+    )
+    # do we run noisy training
+    setup_group.add_argument(
+        "--run_noisy",
+        action="store_true",
+        default=True,
+        help="run noisy training",
+    )
+    # do we run clean training
+    setup_group.add_argument(
+        "--run_clean",
+        action="store_true",
+        default=True,
+        help="run clean training",
+    )
+    # do we run test data
+    setup_group.add_argument(
+        "--test",
+        action="store_true",
+        default=False,
+        help="run test data",
+    )
     # wandb_logger
     setup_group.add_argument(
         "--wandb",
@@ -117,7 +173,6 @@ def setup_parser(
         default=False,
         help="If passed, uses the PyTorch Profiler to track computation, exported as a Chrome-style trace.",
     )
-
     # select data class
     setup_group.add_argument(
         "--data_class",
@@ -165,7 +220,7 @@ def setup_parser(
     setup_group.add_argument(
         "--lr_ft",
         type=float,
-        default=1000,
+        default=0.1,
         help="finetuing learning rate",
     )
     # early stopping
@@ -174,6 +229,13 @@ def setup_parser(
         type=int,
         default=0,
         help="If non-zero, applies early stopping, with the provided value as the 'patience' argument.",
+    )
+    # checkpoint to start training
+    setup_group.add_argument(
+        "--checkpoint",
+        type=str,
+        default="",
+        help="checkpoint to start training. Only vaild for noisy and clean stages",
     )
 
     # Get the data and model classes, so that we can add their specific arguments

@@ -2,6 +2,7 @@ import torch
 import lightning as pl
 import argparse
 import wandb
+from typing import Tuple
 
 from utils.run_helpers import setup_transfer_from_args, setup_callbacks
 
@@ -10,7 +11,6 @@ def fit(
     args: argparse.Namespace,
     arg_groups,
     data: pl.LightningDataModule,
-    run_id: str,
     max_epoch: int,
     model: torch.nn.Module,
     log_dir: str,
@@ -20,7 +20,8 @@ def fit(
     checkpoint: str = "",
     lsmooth: float = None,
     module: str = "hyperiap.models",
-) -> str:
+    run_id: str = None,
+) -> Tuple[str, str]:
     """
     Trains a PyTorch model using PyTorch Lightning
     Args:
@@ -39,7 +40,7 @@ def fit(
         checkpoint (str): Path to the checkpoint file for fine-tuning a pre-trained model.
 
     Returns:
-        str: Path to the new checkpoint file after training.
+        Tuple[str, str]: A tuple containing the Path to the new checkpoint and best val loss.
     """
     # set lit model
     if stage == "ss":
@@ -53,11 +54,12 @@ def fit(
 
     # set loss to monitor
     args.monitor = f"{stage}_"
+
     # stage specifc epochs
     arg_groups["Trainer Args"].max_epochs = max_epoch
+    args.max_epochs = max_epoch
 
-    # contine training logging
-    if run_id:
+    if args.wandb:
         wandb.init(id=run_id, resume="must")
 
     # setup transfer model if finetuning
@@ -81,7 +83,7 @@ def fit(
     )
     callbacks.append(checkpoint_callback)
 
-    # train on noisy lables
+    # train
     trainer = pl.Trainer(
         **vars(arg_groups["Trainer Args"]), callbacks=callbacks, logger=logger
     )
@@ -89,6 +91,7 @@ def fit(
     trainer.fit(seq_model, datamodule=data)
 
     new_checkpoint = checkpoint_callback.best_model_path
+    best_val_loss = checkpoint_callback.best_model_score.item()
 
     # resave checkpoint in format useable for finetuning if training is self supervised
     if stage == "ss":
@@ -106,4 +109,4 @@ def fit(
             new_checkpoint = logger.log_dir + "/ss_classifier.ckpt"
         trainer.save_checkpoint(new_checkpoint)
 
-    return new_checkpoint
+    return new_checkpoint, best_val_loss

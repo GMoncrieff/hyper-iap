@@ -53,12 +53,13 @@ def main():
 
         python run_all.py --model_class=vit.simpleVIT \
             --limit_val_batches=5 --limit_train_batches=10 \
-            --max_epochs_ss=6 --max_epochs_noisy=6 --max_epochs_clean=6 \
+            --max_epochs_ss=10 --max_epochs_noisy=10 --max_epochs_clean=6 \
             --log_every_n_steps=1 \
-            --lr_ft=0.01 \
+            --lr_ft=0.00000001 \
             --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml \
             --wandb
     """
+
     # seed random with datetime
     random.seed(datetime.now())
     parser = setup_parser(
@@ -66,62 +67,6 @@ def main():
         ss_module=MODEL_CLASS_MODULE,
         data_module=DATA_CLASS_MODULE,
         point_module=DATA_CLASS_MODULE,
-    )
-    # labels moothing modifier
-    parser.add_argument(
-        "--ls_modifier",
-        type=float,
-        default=0.2,
-        help="modifier for label smoothing when training on noisy labels",
-    )
-    # ss stage epochs
-    parser.add_argument(
-        "--max_epochs_ss",
-        type=int,
-        default=0,
-        help="num epochs to train ss model",
-    )
-    # noisy stage epochs
-    parser.add_argument(
-        "--max_epochs_noisy",
-        type=int,
-        default=0,
-        help="num epochs to train noisy model",
-    )
-    # clean stage epochs
-    parser.add_argument(
-        "--max_epochs_clean",
-        type=int,
-        default=0,
-        help="num epochs to train clean model",
-    )
-    # do we run ss training
-    parser.add_argument(
-        "--run_ss",
-        action="store_true",
-        default=True,
-        help="run ss training",
-    )
-    # do we run noisy training
-    parser.add_argument(
-        "--run_noisy",
-        action="store_true",
-        default=True,
-        help="run noisy training",
-    )
-    # do we run clean training
-    parser.add_argument(
-        "--run_clean",
-        action="store_true",
-        default=True,
-        help="run clean training",
-    )
-    # do we run test data
-    parser.add_argument(
-        "--test",
-        action="store_true",
-        default=False,
-        help="run test data",
     )
 
     args = parser.parse_args()
@@ -152,10 +97,17 @@ def main():
     seq_model_class = LitClassifier
     ss_model_class = LitSelfSupervised
     log_dir = Path("training") / "logs"
+    checkpoint = args.checkpoint
 
     if args.wandb:
-        wandb.init(project="hyperiap")
-        run_id = wandb.run.id
+        run_id = wandb.util.generate_id()
+        wandb.init(
+            project="hyperiap",
+            id=run_id,
+            dir=log_dir,
+            allow_val_change=True,
+            resume="allow",
+        )
 
     if args.run_ss:
         # -----------
@@ -168,17 +120,17 @@ def main():
         else:
             max_epoch = arg_groups["Trainer Args"].max_epochs
 
-        checkpoint = fit(
+        checkpoint, best_val_loss = fit(
             args=args,
             arg_groups=arg_groups,
             data=data,
-            run_id=run_id,
             max_epoch=max_epoch,
             model=ssmodel,
             log_dir=log_dir,
             stage="ss",
             lit_sup_model=seq_model_class,
             lit_ss_model=ss_model_class,
+            run_id=run_id,
         )
 
         print("ss model checkpoint: ", checkpoint)
@@ -194,11 +146,10 @@ def main():
         else:
             max_epoch = arg_groups["Trainer Args"].max_epochs
 
-        checkpoint = fit(
+        checkpoint, best_val_loss = fit(
             args=args,
             arg_groups=arg_groups,
             data=data,
-            run_id=run_id,
             max_epoch=max_epoch,
             model=model,
             log_dir=log_dir,
@@ -207,6 +158,7 @@ def main():
             lit_ss_model=ss_model_class,
             checkpoint=checkpoint,
             lsmooth=args.ls_modifier,
+            run_id=run_id,
         )
 
         print("noisy model checkpoint: ", checkpoint)
@@ -217,40 +169,37 @@ def main():
         # -----------
 
         # stage specifc epochs
-
         if args.max_epochs_clean > 0:
             max_epoch = args.max_epochs_clean
         else:
             max_epoch = arg_groups["Trainer Args"].max_epochs
 
-        checkpoint = fit(
+        if bool(checkpoint):
+            # if there we are finetuning, we need to load weights into original model
+            clean_model = model
+        else:
+            # otherwise we create a fresh model
+            clean_model = point_model
+
+        checkpoint, best_val_loss = fit(
             args=args,
             arg_groups=arg_groups,
             data=point,
-            run_id=run_id,
             max_epoch=max_epoch,
-            model=point_model,
+            model=clean_model,
             log_dir=log_dir,
             stage="clean",
             lit_sup_model=seq_model_class,
             lit_ss_model=ss_model_class,
             checkpoint=checkpoint,
+            run_id=run_id,
         )
 
         print("clean model checkpoint: ", checkpoint)
 
-        # test dataset
-        if args.test:
-            # TODO create test function in utils
-            # turn profiling off during testing
-            # trainer.profiler = (pl.pytorch.profilers.PassThroughProfiler())
-            # trainer.test(seq_model, datamodule=data)
-            pass
-        else:
-            test_loss = random.randint(1, 100000)
-
     if args.wandb:
-        wandb.log({"test_loss": test_loss})
+        # log best validation loss at end of pipeline
+        wandb.log({"test_loss": best_val_loss})
         # end wandb experiment
         wandb.finish()
 
