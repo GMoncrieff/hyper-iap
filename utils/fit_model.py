@@ -17,7 +17,7 @@ def fit(
     stage: str,
     lit_sup_model: pl.LightningModule,
     lit_ss_model: pl.LightningModule,
-    checkpoint: str = None,
+    checkpoint: str = "",
     lsmooth: float = None,
     module: str = "hyperiap.models",
 ) -> str:
@@ -51,6 +51,8 @@ def fit(
         # change label smoothing
         args.label_smooth = lsmooth
 
+    # set loss to monitor
+    args.monitor = f"{stage}_"
     # stage specifc epochs
     arg_groups["Trainer Args"].max_epochs = max_epoch
 
@@ -59,7 +61,7 @@ def fit(
         wandb.init(id=run_id, resume="must")
 
     # setup transfer model if finetuning
-    if checkpoint:
+    if bool(checkpoint):
         seq_model = lit_model.load_from_checkpoint(checkpoint, args=args, model=model)
         transfer = setup_transfer_from_args(
             args, seq_model.model, data, model_module=module
@@ -73,7 +75,7 @@ def fit(
         args=args,
         log_dir=log_dir,
         model=seq_model,
-        finetune=True,
+        finetune=bool(checkpoint),
         append=f"_{stage}",
         log_metric=f"{stage}_val_loss",
     )
@@ -102,5 +104,6 @@ def fit(
             new_checkpoint = logger.experiment.dir + "/ss_classifier.ckpt"
         else:
             new_checkpoint = logger.log_dir + "/ss_classifier.ckpt"
+        trainer.save_checkpoint(new_checkpoint)
 
     return new_checkpoint

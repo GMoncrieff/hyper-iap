@@ -129,7 +129,7 @@ def setup_parser(
     setup_group.add_argument(
         "--point_class",
         type=str,
-        default="point_module.XarrayPointDataModule",
+        default="point_module.PointDataModule",
         help=f"String identifier for the point data class, relative to {point_module}.",
     )
     # select model class

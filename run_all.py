@@ -140,9 +140,8 @@ def main():
         args, data_module=DATA_CLASS_MODULE, point_module=DATA_CLASS_MODULE
     )
 
-    model = setup_model_from_args(
-        args, data, ss_module=MODEL_CLASS_MODULE, model_module=MODEL_CLASS_MODULE
-    )
+    model = setup_model_from_args(args, data, model_module=MODEL_CLASS_MODULE)
+    point_model = setup_model_from_args(args, point, model_module=MODEL_CLASS_MODULE)
 
     if args.run_ss:
         ssmodel = setup_ssmodel_from_args(args, model, ss_module=MODEL_CLASS_MODULE)
@@ -227,10 +226,10 @@ def main():
         checkpoint = fit(
             args=args,
             arg_groups=arg_groups,
-            data=data,
+            data=point,
             run_id=run_id,
             max_epoch=max_epoch,
-            model=model,
+            model=point_model,
             log_dir=log_dir,
             stage="clean",
             lit_sup_model=seq_model_class,
