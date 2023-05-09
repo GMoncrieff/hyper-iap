@@ -55,7 +55,7 @@ def main():
             --limit_val_batches=5 --limit_train_batches=10 \
             --max_epochs_ss=10 --max_epochs_noisy=10 --max_epochs_clean=6 \
             --log_every_n_steps=1 \
-            --lr_ft=0.00000001 \
+            --lr_ft=0.0000001 \
             --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml \
             --wandb
     """
