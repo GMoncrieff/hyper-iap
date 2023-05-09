@@ -2,6 +2,8 @@ from argparse import Namespace
 from torch.utils.data import random_split
 from hyperiap.datasets.xarray_dataset import XarrayDataset
 from hyperiap.datasets.base_module import BaseDataModule
+from hyperiap.datasets.transforms import UnitVectorNorm
+
 from typing import Optional
 
 import numpy as np
@@ -67,7 +69,11 @@ class XarrayDataModule(BaseDataModule):
         dataset_size = (self.batch_gen_train.dims[BATCHDIM] // CHUNKS[BATCHDIM]) - 1
 
         traindata = XarrayDataset(
-            self.batch_gen_train, BATCHDIM, dataset_size, CHUNKS[BATCHDIM]
+            self.batch_gen_train,
+            BATCHDIM,
+            dataset_size,
+            CHUNKS[BATCHDIM],
+            transform=UnitVectorNorm(),
         )
         # self.data_test = XarrayDataset(self.batch_gen_test)
 

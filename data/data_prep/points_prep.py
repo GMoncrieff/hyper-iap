@@ -62,6 +62,18 @@ points["label"] = le.fit_transform(points["class"])
 # drop na labels
 points = points.query("label != 9")
 
+# save name mapping
+# Create a dictionary of the label-to-class mapping
+label_to_class = {
+    label: original_class for label, original_class in enumerate(le.classes_)
+}
+
+# Remove the final class from the dictionary
+del label_to_class[max(label_to_class)]
+
+with open("data/name_mapping.json", "w") as outfile:
+    json.dump(label_to_class, outfile)
+
 # get neighbour pixels
 #####################
 
@@ -88,6 +100,22 @@ xdp = dsx.sel(x=x_indexer, y=y_indexer, method="nearest").load()
 # add label column
 points = points["label"].to_xarray()
 xdp = xdp.merge(points)
+
+# clean up
+xdp = xdp.dropna(dim="index", how="any")
+
+# drop chunks encoding
+del xdp.x.encoding["chunks"]
+del xdp.x.encoding["preferred_chunks"]
+del xdp.y.encoding["chunks"]
+del xdp.y.encoding["preferred_chunks"]
+del xdp.label.encoding["chunks"]
+del xdp.label.encoding["preferred_chunks"]
+del xdp.index.encoding["chunks"]
+del xdp.index.encoding["preferred_chunks"]
+
+# rechunnk
+xdp = xdp.chunk({"index": 32, "wl": -1, "z": -1})
 
 # write data
 xdp.to_zarr(

@@ -30,21 +30,28 @@ def setup_data_from_args(args: Namespace, data_module: str, point_module: str):
     return data, point
 
 
-def setup_models_from_args(args: Namespace, data, ss_module: str, model_module: str):
-    """setup pl models"""
-    model_class = import_class(f"{model_module}.{args.model_class}")
+def setup_ssmodel_from_args(args: Namespace, model: torch.nn.Module, ss_module: str):
+    """setup torch model"""
     ssmodel_class = import_class(f"{ss_module}.{args.ssmodel_class}")
-
-    model = model_class(data_config=data.config(), args=args)
     ssmodel = ssmodel_class(encoder=model, args=args)
 
-    return model, ssmodel
+    return ssmodel
+
+
+def setup_model_from_args(
+    args: Namespace, data: pl.LightningDataModule, model_module: str
+):
+    """setup torch model"""
+    model_class = import_class(f"{model_module}.{args.model_class}")
+    model = model_class(data_config=data.config(), args=args)
+
+    return model
 
 
 def setup_transfer_from_args(
     args: Namespace, model: torch.nn.Module, data, model_module: str
 ):
-    """setup pl model for trasnfer learning"""
+    """setup torch model for transfer learning"""
     transfer_class = import_class(f"{model_module}.{args.transfer_class}")
     transfer = transfer_class(model, data_config=data.config())
 
@@ -96,6 +103,62 @@ def setup_parser(
     )
 
     setup_group = parser.add_argument_group("Setup Args")
+    # labels moothing modifier
+    setup_group.add_argument(
+        "--ls_modifier",
+        type=float,
+        default=0.2,
+        help="modifier for label smoothing when training on noisy labels",
+    )
+    # ss stage epochs
+    setup_group.add_argument(
+        "--max_epochs_ss",
+        type=int,
+        default=0,
+        help="num epochs to train ss model",
+    )
+    # noisy stage epochs
+    setup_group.add_argument(
+        "--max_epochs_noisy",
+        type=int,
+        default=0,
+        help="num epochs to train noisy model",
+    )
+    # clean stage epochs
+    setup_group.add_argument(
+        "--max_epochs_clean",
+        type=int,
+        default=0,
+        help="num epochs to train clean model",
+    )
+    # do we run ss training
+    setup_group.add_argument(
+        "--run_ss",
+        action="store_true",
+        default=False,
+        help="run ss training",
+    )
+    # do we run noisy training
+    setup_group.add_argument(
+        "--run_noisy",
+        action="store_true",
+        default=False,
+        help="run noisy training",
+    )
+    # do we run clean training
+    setup_group.add_argument(
+        "--run_clean",
+        action="store_true",
+        default=True,
+        help="run clean training",
+    )
+    # do we run test data
+    setup_group.add_argument(
+        "--test",
+        action="store_true",
+        default=False,
+        help="run test data",
+    )
     # wandb_logger
     setup_group.add_argument(
         "--wandb",
@@ -110,7 +173,6 @@ def setup_parser(
         default=False,
         help="If passed, uses the PyTorch Profiler to track computation, exported as a Chrome-style trace.",
     )
-
     # select data class
     setup_group.add_argument(
         "--data_class",
@@ -122,7 +184,7 @@ def setup_parser(
     setup_group.add_argument(
         "--point_class",
         type=str,
-        default="xarray_module.XarrayDataModule",
+        default="point_module.PointDataModule",
         help=f"String identifier for the point data class, relative to {point_module}.",
     )
     # select model class
@@ -158,7 +220,7 @@ def setup_parser(
     setup_group.add_argument(
         "--lr_ft",
         type=float,
-        default=1000,
+        default=0.1,
         help="finetuing learning rate",
     )
     # early stopping
@@ -167,6 +229,13 @@ def setup_parser(
         type=int,
         default=0,
         help="If non-zero, applies early stopping, with the provided value as the 'patience' argument.",
+    )
+    # checkpoint to start training
+    setup_group.add_argument(
+        "--checkpoint",
+        type=str,
+        default="",
+        help="checkpoint to start training. Only vaild for noisy and clean stages",
     )
 
     # Get the data and model classes, so that we can add their specific arguments
