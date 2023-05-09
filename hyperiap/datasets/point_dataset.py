@@ -6,8 +6,8 @@ from einops import rearrange
 import numpy as np
 
 PREDICTOR_VAR = "reflectance"
-LABEL_VAR = "recode"
-# LABEL_VAR = "label"
+# LABEL_VAR = "recode"
+LABEL_VAR = "label"
 
 
 class PointDataset(Dataset):

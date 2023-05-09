@@ -4,5 +4,5 @@
         "z",
         "index"
     ],
-    "coordinates": "y x"
+    "coordinates": "spatial_ref x y"
 }
