@@ -13,7 +13,7 @@ on:
   
 jobs:
   pytest:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
@@ -36,15 +36,14 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    - name: Test classifier
+    - name: Test 1-stage
       run: |
-        python run_classifier.py --limit_val_batches=5 --limit_train_batches=5 --max_epochs=2
+        python python run_all.py --model_class=vit.simpleVIT --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5
 
-    - name: Test self-supervised
+    - name: Test 2-stage
       run: |
-        python run_selfsupervised.py --limit_val_batches=5 --limit_train_batches=5 --max_epochs=2
-        
-    - name: Test run all
+        python python run_all.py --model_class=vit.simpleVIT --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5 --run_noisy --run_clean
+
+    - name: Test 3-stage
       run: |
-        python run_all.py --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml --limit_val_batches=5 --limit_train_batches=5 --max_epochs=2
-        
+        python python run_all.py --model_class=vit.simpleVIT --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5 --run_ss --run_noisy --run_clean

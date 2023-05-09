@@ -44,20 +44,18 @@ def main():
      To see which command line args are available and read their documentation
      provide values for those arguments before invoking --help, like so:
      ```
+        # a simple run
         python run_all.py --model_class=vit.simpleVIT \
-            --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5 \
-            --log_every_n_steps=2 \
-            --lr_ft=10000 \
-            --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml \
-            --wandb
+            --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5
 
+        # a run with all stages
         python run_all.py --model_class=vit.simpleVIT \
             --limit_val_batches=5 --limit_train_batches=10 \
             --max_epochs_ss=10 --max_epochs_noisy=10 --max_epochs_clean=6 \
             --log_every_n_steps=1 \
             --lr_ft=0.0000001 \
             --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml \
-            --wandb
+            --wandb --run_ss --run_noisy --run_clean
     """
 
     # seed random with datetime
@@ -98,6 +96,7 @@ def main():
     ss_model_class = LitSelfSupervised
     log_dir = Path("training") / "logs"
     checkpoint = args.checkpoint
+    run_id = None
 
     if args.wandb:
         run_id = wandb.util.generate_id()
