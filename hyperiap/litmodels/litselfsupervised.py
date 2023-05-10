@@ -12,6 +12,7 @@ from hyperiap.litmodels.litbasemodel import LitBaseModel
 LR_SS = 1e-3
 LOSS_SS = "mse_loss"
 T_0_SS = 2
+# number of pixles in plot
 P_LENGTH = 6
 SS_MONITOR = "ss_"
 
@@ -31,6 +32,8 @@ class LitSelfSupervised(LitBaseModel):
         self.loss_fn = getattr(torch.nn.functional, loss)
 
         self.T_0 = self.args.get("T_0_ss", T_0_SS)
+        # patch len from transformer
+        self.patch_length = self.args.get("patch_len")
 
     def forward(self, x):
         # use forward for inference/predictions
@@ -84,7 +87,7 @@ class LitSelfSupervised(LitBaseModel):
 
         if self.wandb:
             wandb_logger = self.logger.experiment
-            patch = 4
+            patch = self.patch_length
             fig = self._plot_hyperspec(
                 pred_pixel.cpu(),
                 masked_pixel.cpu(),
@@ -163,13 +166,19 @@ class LitSelfSupervised(LitBaseModel):
 
         # unwrap pred masked pixel values
         p_mask = (
-            rearrange(pred_pixel, "b c (p z) -> b z (c p)", p=patch).detach().numpy()
+            rearrange(pred_pixel, "b c (p z) -> b z (c p)", p=patch)
+            .to(dtype=torch.float)
+            .detach()
+            .numpy()
         )
         p_mask = p_mask[samp, 0, :] / 10000
 
         # unwrap actual masked pixels values
         mask = (
-            rearrange(masked_pixel, "b c (p z) -> b z (c p)", p=patch).detach().numpy()
+            rearrange(masked_pixel, "b c (p z) -> b z (c p)", p=patch)
+            .to(dtype=torch.float)
+            .detach()
+            .numpy()
         )
         mask = mask[samp, 0, :] / 10000
 

@@ -10,11 +10,20 @@ command:
     - "--limit_val_batches"
     - "5"
     - "--limit_train_batches"
-    - "10"
-    - "--log_every_n_steps"
-    - "2"
-    - "--max_epochs"
     - "5"
+    - "--log_every_n_steps"
+    - "1"
+    - "--max_epochs_ss"
+    - "6"
+    - "--max_epochs_noisy"
+    - "6"
+    - "--max_epochs_clean"
+    - "6"
+    - "--precision"
+    - "32"
+    - "--run_ss" 
+    - "--run_noisy"
+    - "--run_clean"
     - ${args}  # these arguments come from the sweep parameters below
 
 # and we specify which parameters to sweep over, what we're optimizing, and how we want to optimize it
@@ -23,14 +32,46 @@ metric:
     name: test_loss
     goal: minimize
 parameters:  
+    ##########################
+    # pipeline hyperparameters
+    ###########################
+    ls_modifier:
+        values: [0.0, 0.2]
+    ##########################
     # litmodel hyperparameters
+    ###########################
+    lr_ss:
+        values: [0.0001, 0.001]
     lr:
-        values: [0.001, 0.01]
+        values: [0.0001, 0.001]
+    lr_ft:
+        values: [0.00001, 0.0001]
+    label_smooth:
+        values: [0.0, 0.1]
+    ###########################
+    # MAE hyperparameters
+    ###########################
+    decoder_dim:
+        values: [128, 512]
+    decoder_dim_head:
+        values: [32,128]
+    masking_ratio:
+        values: [0.6,0.75,0.9]
+    ###########################
     # ViT hyperparameters
-    #patch_len:
-    #    values: [1, 2, 3]
+    ###########################
+    dim:
+        values: [64,128]
+    dim_head:
+        values: [16,32]
+    patch_len:
+        values: [2, 4, 6]
+    mlp_dim:
+        values: [8,32]
     dropout:
-        values: [0.1, 0.2, 0.3]
+        values: [0, 0.2]
+    emb_dropout:
+        values: [0, 0.2]
     # we can also fix some values, just like we set default arguments
     #gpus:
     #    value: 1
@@ -39,4 +80,4 @@ parameters:
     data_class:
         value: xarray_module.XarrayDataModule
     ft_schedule:
-        value: hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml
+        value: hyperiap/litmodels/LitClassifier_vit_ft_schedule.yaml

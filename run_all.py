@@ -51,16 +51,16 @@ def main():
         # a run with all stages
         python run_all.py --model_class=vit.simpleVIT \
             --limit_val_batches=5 --limit_train_batches=10 \
-            --max_epochs_ss=10 --max_epochs_noisy=10 --max_epochs_clean=6 \
-            --log_every_n_steps=1 --lr_ft=0.0000001 \
+            --lr=0.1 --lr_ss=0.1 --lr_ft=0.00001 \
+            --max_epochs_ss=10 --max_epochs_noisy=10 --max_epochs_clean=6 --log_every_n_steps=1\
             --ft_schedule=hyperiap/litmodels/LitClassifier_vit_ft_schedule.yaml \
-            --wandb --run_ss --run_noisy --run_clean
+            --wandb --run_ss --run_noisy --run_clean --precision=16
 
         # a run with tempcnn
         python run_all.py --model_class=tempcnn.TEMPCNN \
             --limit_val_batches=5 --limit_train_batches=10 \
-            --max_epochs_noisy=10 --max_epochs_clean=6 \
-            --log_every_n_steps=1 --lr_ft=0.0000001 \
+            --lr_ft=0.0000001 \
+            --max_epochs_noisy=10 --max_epochs_clean=6 --log_every_n_steps=1 \
             --transfer_class=tempcnn.TransferLearningTempCNN \
             --ft_schedule=hyperiap/litmodels/LitClassifier_tempcnn_ft_schedule.yaml \
             --wandb --run_noisy --run_clean

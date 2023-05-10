@@ -15,7 +15,6 @@ MLP_DIM = 8
 DROPOUT = 0.1
 EMB_DROPOUT = 0.1
 PATCH_LEN = 4
-MODE = "ViT"
 
 
 class FeedForward(nn.Module):
@@ -189,7 +188,6 @@ class simpleVIT(nn.Module):
         mlp_dim = self.args.get("mlp_dim", MLP_DIM)
         dropout = self.args.get("dropout", DROPOUT)
         emb_dropout = self.args.get("emb_dropout", EMB_DROPOUT)
-        # mode = self.args.get("mode", MODE)
         patch_len = self.args.get("patch_len", PATCH_LEN)
 
         self.embedding = simpleVITextractor(
@@ -222,6 +220,5 @@ class simpleVIT(nn.Module):
         parser.add_argument("--mlp_dim", type=int, default=MLP_DIM)
         parser.add_argument("--dropout", type=float, default=DROPOUT)
         parser.add_argument("--emb_dropout", type=float, default=EMB_DROPOUT)
-        parser.add_argument("--mode", type=str, default=MODE)
         parser.add_argument("--patch_len", type=int, default=PATCH_LEN)
         return parser
