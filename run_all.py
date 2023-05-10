@@ -52,10 +52,18 @@ def main():
         python run_all.py --model_class=vit.simpleVIT \
             --limit_val_batches=5 --limit_train_batches=10 \
             --max_epochs_ss=10 --max_epochs_noisy=10 --max_epochs_clean=6 \
-            --log_every_n_steps=1 \
-            --lr_ft=0.0000001 \
-            --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml \
+            --log_every_n_steps=1 --lr_ft=0.0000001 \
+            --ft_schedule=hyperiap/litmodels/LitClassifier_vit_ft_schedule.yaml \
             --wandb --run_ss --run_noisy --run_clean
+
+        # a run with tempcnn
+        python run_all.py --model_class=tempcnn.TEMPCNN \
+            --limit_val_batches=5 --limit_train_batches=10 \
+            --max_epochs_noisy=10 --max_epochs_clean=6 \
+            --log_every_n_steps=1 --lr_ft=0.0000001 \
+            --transfer_class=tempcnn.TransferLearningTempCNN \
+            --ft_schedule=hyperiap/litmodels/LitClassifier_tempcnn_ft_schedule.yaml \
+            --wandb --run_noisy --run_clean
     """
 
     # seed random with datetime

@@ -4,6 +4,7 @@ from finetuning_scheduler import FinetuningScheduler
 from hyperiap.models.vit import simpleVIT, TransferLearningVIT
 from hyperiap.models.mae import MAE
 from hyperiap.datasets.xarray_module import XarrayDataModule
+from hyperiap.models.tempcnn import TEMPCNN, TransferLearningTempCNN
 
 from hyperiap.litmodels.litclassifier import LitClassifier
 from hyperiap.litmodels.litselfsupervised import LitSelfSupervised
@@ -11,11 +12,11 @@ from hyperiap.litmodels.litselfsupervised import LitSelfSupervised
 seed_everything(1234)
 
 
-def test_transfer_classifier():
+def test_transfer_vit_classifier():
 
     ft_schedule_yaml = """
     0:
-        max_transition_epoch: 1
+        max_transition_epoch: 2
         params:
         - model.linear_head.0.weight
         - model.linear_head.0.bias
@@ -23,7 +24,7 @@ def test_transfer_classifier():
         - model.linear_head.1.bias
     1:
         lr: 1.0e-05
-        max_transition_epoch: -1
+        max_transition_epoch: 4
         params:
         - model.embedding.pos_embedding
         - model.embedding.to_patch_embedding.1.weight
@@ -99,17 +100,77 @@ def test_transfer_classifier():
 
     model = LitSelfSupervised(ss_model)
 
-    trainer = Trainer(limit_train_batches=2, limit_val_batches=2, max_epochs=2)
+    trainer = Trainer(limit_train_batches=2, limit_val_batches=2, max_epochs=4)
     trainer.fit(model, datamodule=xmod)
 
     # fine tune
     trainer = Trainer(
-        max_epochs=2,
+        max_epochs=4,
         limit_train_batches=2,
         limit_val_batches=2,
         callbacks=[FinetuningScheduler(ft_schedule=ft_schedule_name)],
     )
     model_ft = TransferLearningVIT(encoder, data_config=xmod.config())
+    # model_ft=simpleVIT(data_config=xmod.config())
+    model_bc = LitClassifier(model_ft)
+
+    # trainer = Trainer(limit_train_batches=3, limit_val_batches=1, max_epochs=1)
+    trainer.fit(model_bc, datamodule=xmod)
+
+    x = trainer.validate(datamodule=xmod)
+
+    assert x[0]["val_acc"] >= 0.0
+
+
+def test_transfer_tempcnn_classifier():
+    ft_schedule_yaml = """
+    0:
+        max_transition_epoch: 5
+        params:
+        - model.out.bias
+        - model.out.weight
+    1:
+        lr: 0.005
+        max_transition_epoch: 8
+        params:
+        - model.extractor.dense.block.1.bias
+        - model.extractor.dense.block.1.weight
+        - model.extractor.dense.block.0.bias
+        - model.extractor.dense.block.0.weight
+        - model.extractor.conv_bn_relu3.block.1.bias
+        - model.extractor.conv_bn_relu3.block.1.weight
+        - model.extractor.conv_bn_relu3.block.0.bias
+        - model.extractor.conv_bn_relu3.block.0.weight
+        - model.extractor.conv_bn_relu2.block.1.bias
+        - model.extractor.conv_bn_relu2.block.1.weight
+        - model.extractor.conv_bn_relu2.block.0.bias
+        - model.extractor.conv_bn_relu2.block.0.weight
+        - model.extractor.conv_bn_relu1.block.1.bias
+        - model.extractor.conv_bn_relu1.block.1.weight
+        - model.extractor.conv_bn_relu1.block.0.bias
+        - model.extractor.conv_bn_relu1.block.0.weight
+    """
+
+    ft_schedule_name = "test_shedule.yaml"
+    # Let's write the schedule to a file so we can simulate loading an explicitly defined fine-tuning
+    # schedule.
+    with open(ft_schedule_name, "w") as f:
+        f.write(ft_schedule_yaml)
+
+    # pre-train
+    xmod = XarrayDataModule()
+    litmodel = LitClassifier(TEMPCNN(data_config=xmod.config()))
+    trainer = Trainer(limit_train_batches=2, limit_val_batches=2, max_epochs=4)
+    trainer.fit(litmodel, datamodule=xmod)
+
+    # fine tune
+    trainer = Trainer(
+        max_epochs=4,
+        limit_train_batches=2,
+        limit_val_batches=2,
+        callbacks=[FinetuningScheduler(ft_schedule=ft_schedule_name)],
+    )
+    model_ft = TransferLearningTempCNN(litmodel.model, data_config=xmod.config())
     # model_ft=simpleVIT(data_config=xmod.config())
     model_bc = LitClassifier(model_ft)
 
