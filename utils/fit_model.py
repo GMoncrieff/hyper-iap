@@ -50,7 +50,7 @@ def fit(
 
     if lsmooth:
         # change label smoothing
-        args.label_smooth = lsmooth
+        args.label_smooth = args.label_smooth + lsmooth
 
     # set loss to monitor
     args.monitor = f"{stage}_"

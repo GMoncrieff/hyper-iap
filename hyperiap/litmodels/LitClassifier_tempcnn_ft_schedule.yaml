@@ -1,0 +1,25 @@
+0:
+  max_transition_epoch: 5
+  params:
+  - model.out.bias
+  - model.out.weight
+1:
+  lr: 0.005
+  max_transition_epoch: 4
+  params:
+  - model.extractor.dense.block.1.bias
+  - model.extractor.dense.block.1.weight
+  - model.extractor.dense.block.0.bias
+  - model.extractor.dense.block.0.weight
+  - model.extractor.conv_bn_relu3.block.1.bias
+  - model.extractor.conv_bn_relu3.block.1.weight
+  - model.extractor.conv_bn_relu3.block.0.bias
+  - model.extractor.conv_bn_relu3.block.0.weight
+  - model.extractor.conv_bn_relu2.block.1.bias
+  - model.extractor.conv_bn_relu2.block.1.weight
+  - model.extractor.conv_bn_relu2.block.0.bias
+  - model.extractor.conv_bn_relu2.block.0.weight
+  - model.extractor.conv_bn_relu1.block.1.bias
+  - model.extractor.conv_bn_relu1.block.1.weight
+  - model.extractor.conv_bn_relu1.block.0.bias
+  - model.extractor.conv_bn_relu1.block.0.weight

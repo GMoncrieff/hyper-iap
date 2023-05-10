@@ -213,7 +213,7 @@ def setup_parser(
     setup_group.add_argument(
         "--ft_schedule",
         type=str,
-        default="hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml",
+        default="hyperiap/litmodels/LitClassifier_vit_ft_schedule.yaml",
         help="path to schedule for finetuing",
     )
     # lr finetune

@@ -132,12 +132,12 @@ class TransferLearningTempCNN(nn.Module):
         super().__init__()
         self.data_config = data_config
         # init a pretrained model
-        num_filters = backbone.model.out.in_features
-        self.extractor = backbone.model.extractor
+        num_filters = backbone.out.in_features
+        self.extractor = backbone.extractor
 
         num_target_classes = data_config["num_classes"]
-        self.classifier = nn.Linear(num_filters, num_target_classes)
+        self.out = nn.Linear(num_filters, num_target_classes)
 
     def forward(self, x):
         embeddings = self.extractor(x)
-        return self.classifier(embeddings)
+        return self.out(embeddings)
