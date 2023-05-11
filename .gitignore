@@ -47,6 +47,7 @@ wandb/
 data/test_batched_torch.zarr/
 data/fran_pixsample.zarr/
 data/fran_pixsample_clean.zarr/
+data/clean_batched_torch.zarr/
 hyperiap/callbacks/wandb_table.py
 
 # PyInstaller

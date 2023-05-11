@@ -26,6 +26,7 @@ MODEL_CLASS_MODULE = "hyperiap.models"
 np.random.seed(42)
 torch.manual_seed(42)
 pl.seed_everything(1234)
+torch.set_float32_matmul_precision("medium")
 
 
 def main():
@@ -50,9 +51,8 @@ def main():
 
         # a run with all stages
         python run_all.py --model_class=vit.simpleVIT \
-            --limit_val_batches=5 --limit_train_batches=10 \
-            --lr=0.1 --lr_ss=0.1 --lr_ft=0.00001 \
-            --max_epochs_ss=10 --max_epochs_noisy=10 --max_epochs_clean=6 --log_every_n_steps=1\
+            --lr=0.001 --lr_ss=0.001 --lr_ft=0.0001 \
+            --max_epochs_ss=20 --max_epochs_noisy=20 --max_epochs_clean=100 --log_every_n_steps=50\
             --ft_schedule=hyperiap/litmodels/LitClassifier_vit_ft_schedule.yaml \
             --wandb --run_ss --run_noisy --run_clean --precision=16
 

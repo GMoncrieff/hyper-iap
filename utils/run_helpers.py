@@ -5,6 +5,7 @@ import importlib
 from pathlib import Path
 import torch
 import lightning as pl
+from typing import Union
 
 from hyperiap.litmodels.litclassifier import LitClassifier
 from hyperiap.litmodels.litselfsupervised import LitSelfSupervised
@@ -67,14 +68,14 @@ def setup_parser(
     # Add Trainer specific arguments, such as --max_epochs, --gpus, --precision
     trainer_group.add_argument(
         "--limit_val_batches",
-        type=int,
-        default=2,
+        type=Union[int, float, None],
+        default=1.0,
         help="limit_val_batches",
     )
     trainer_group.add_argument(
         "--limit_train_batches",
-        type=int,
-        default=2,
+        type=Union[int, float, None],
+        default=1.0,
         help="limit_train_batches",
     )
     trainer_group.add_argument(

@@ -7,11 +7,11 @@ from einops import rearrange
 from einops.layers.torch import Rearrange
 
 # model params
-DIM = 64
+DIM = 128
 DEPTH = 5
 HEADS = 4
-DIM_HEAD = 16
-MLP_DIM = 8
+DIM_HEAD = 32
+MLP_DIM = 32
 DROPOUT = 0.1
 EMB_DROPOUT = 0.1
 PATCH_LEN = 4
