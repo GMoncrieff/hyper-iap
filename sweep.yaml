@@ -7,20 +7,20 @@ command:
     - ${interpreter}
     - ${program}
     - "--wandb"
-    - "--limit_val_batches"
-    - "5"
-    - "--limit_train_batches"
-    - "5"
     - "--log_every_n_steps"
-    - "1"
+    - "50"
     - "--max_epochs_ss"
-    - "6"
+    - "5"
     - "--max_epochs_noisy"
-    - "6"
+    - "5"
     - "--max_epochs_clean"
-    - "6"
+    - "2000"
+    - "--val_check_interval"
+    - "0.5"
+    - "--gradient_clip_val"
+    - "0.5"
     - "--precision"
-    - "32"
+    - "16"
     - "--run_ss" 
     - "--run_noisy"
     - "--run_clean"
@@ -29,50 +29,50 @@ command:
 # and we specify which parameters to sweep over, what we're optimizing, and how we want to optimize it
 method: random  # generally, random searches perform well, can also be "grid" or "bayes"
 metric:
-    name: test_loss
+    name: final_loss
     goal: minimize
 parameters:  
     ##########################
     # pipeline hyperparameters
     ###########################
     ls_modifier:
-        values: [0.0, 0.2]
+        values: [0.0, 0.1, 0.2]
     ##########################
     # litmodel hyperparameters
     ###########################
     #suggest 0.0006
     lr_ss:
-        values: [0.0001, 0.001]
+        values: [0.00001]
     lr:
         values: [0.0001, 0.001]
     lr_ft:
         values: [0.00001, 0.0001]
     label_smooth:
-        values: [0.0, 0.1]
+        values: [0.0]
     ###########################
     # MAE hyperparameters
     ###########################
     decoder_dim:
-        values: [128, 512]
+        values: [512]
     decoder_dim_head:
-        values: [32,128]
+        values: [128]
     decoder_depth:
-        values: [1, 2]
+        values: [2]
     decoder_heads:
-        values: [2, 4]
+        values: [4]
     masking_ratio:
         values: [0.75,0.85,0.95]
     ###########################
     # ViT hyperparameters
     ###########################
     dim:
-        values: [64,128]
+        values: [128]
     dim_head:
-        values: [16,32]
+        values: [32]
     patch_len:
         values: [2, 4, 6]
     mlp_dim:
-        values: [8,32]
+        values: [32]
     dropout:
         values: [0, 0.2]
     emb_dropout:

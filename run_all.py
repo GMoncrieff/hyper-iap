@@ -52,7 +52,7 @@ def main():
         # a run with all stages
         python run_all.py --model_class=vit.simpleVIT \
             --lr=0.001 --lr_ss=0.001 --lr_ft=0.0001 \
-            --max_epochs_ss=20 --max_epochs_noisy=20 --max_epochs_clean=100 --log_every_n_steps=50\
+            --max_epochs_ss=2 --max_epochs_noisy=2 --max_epochs_clean=10 --log_every_n_steps=5\
             --ft_schedule=hyperiap/litmodels/LitClassifier_vit_ft_schedule.yaml \
             --wandb --run_ss --run_noisy --run_clean --precision=16
 
@@ -199,6 +199,7 @@ def main():
             lit_sup_model=seq_model_class,
             lit_ss_model=ss_model_class,
             checkpoint=checkpoint,
+            lsmooth=args.ls_modifier,
             run_id=run_id,
         )
 
@@ -206,7 +207,7 @@ def main():
 
     if args.wandb:
         # log best validation loss at end of pipeline
-        wandb.log({"test_loss": best_val_loss})
+        wandb.log({"final_loss": best_val_loss})
         # end wandb experiment
         wandb.finish()
 

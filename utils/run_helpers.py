@@ -68,15 +68,21 @@ def setup_parser(
     # Add Trainer specific arguments, such as --max_epochs, --gpus, --precision
     trainer_group.add_argument(
         "--limit_val_batches",
-        type=int,
-        default=10,
+        type=float,
+        default=1.0,
         help="limit_val_batches",
     )
     trainer_group.add_argument(
         "--limit_train_batches",
-        type=int,
-        default=10,
+        type=float,
+        default=1.0,
         help="limit_train_batches",
+    )
+    trainer_group.add_argument(
+        "--gradient_clip_val",
+        type=float,
+        default=0.5,
+        help="gradient_clip_val",
     )
     trainer_group.add_argument(
         "--max_epochs",
@@ -97,6 +103,12 @@ def setup_parser(
         help="--log_every_n_steps",
     )
     trainer_group.add_argument(
+        "--val_check_interval",
+        type=float,
+        default=0.5,
+        help="--val_check_interval",
+    )
+    trainer_group.add_argument(
         "--precision",
         type=int,
         default=32,
@@ -108,7 +120,7 @@ def setup_parser(
     setup_group.add_argument(
         "--ls_modifier",
         type=float,
-        default=0.2,
+        default=0.0,
         help="modifier for label smoothing when training on noisy labels",
     )
     # ss stage epochs
@@ -136,14 +148,14 @@ def setup_parser(
     setup_group.add_argument(
         "--run_ss",
         action="store_true",
-        default=False,
+        default=True,
         help="run ss training",
     )
     # do we run noisy training
     setup_group.add_argument(
         "--run_noisy",
         action="store_true",
-        default=False,
+        default=True,
         help="run noisy training",
     )
     # do we run clean training
@@ -334,7 +346,7 @@ def setup_callbacks(
         # open ft schedule and change lr
         with open(args.ft_schedule, "r") as file:
             data = yaml.safe_load(file)
-            data[0]["max_transition_epoch"] = int(args.max_epochs / 2)
+            data[0]["max_transition_epoch"] = max(1, int(args.max_epochs / 100))
             data[1]["max_transition_epoch"] = args.max_epochs
             data[1]["lr"] = args.lr_ft
 

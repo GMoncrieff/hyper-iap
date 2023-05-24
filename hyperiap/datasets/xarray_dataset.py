@@ -36,6 +36,7 @@ class XarrayDataset(Dataset):
                 )
             }
         )
+        batch = batch.sel(wl=slice(0, 2))
         x_batch = batch[PREDICTOR_VAR].load()
         y_batch = batch[LABEL_VAR].load()
         x_batch = torch.from_numpy(x_batch.data)

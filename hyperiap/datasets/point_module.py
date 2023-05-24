@@ -2,7 +2,7 @@ from argparse import Namespace
 from torch.utils.data import random_split
 from hyperiap.datasets.point_dataset import PointDataset
 from hyperiap.datasets.base_module import BaseDataModule
-from hyperiap.datasets.transforms import UnitVectorNorm
+from hyperiap.datasets.transforms import UnitVectorNorm, Normalize
 
 from typing import Optional
 
@@ -10,12 +10,13 @@ import numpy as np
 import xarray as xr
 import torch
 
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 
 SPLIT = 0.2
 # 0->8
 N_CLASS = 9
-N_BAND = 267
+N_BAND = 202
+# N_BAND = 267
 N_DIM = 9
 
 # PROCESSED_TEST_DATA = "gcs://fran-share/fran_pixsample.zarr"
@@ -53,7 +54,7 @@ class PointDataModule(BaseDataModule):
         #    print(f'Test data file {self.full_test_file} not found')
 
         # store wl for later use
-        self.wl = self.batch_gen_train.wl.values
+        self.wl = self.batch_gen_train.sel(wl=slice(0, 2.1)).wl.values
 
     def prepare_data(self, *args, **kwargs) -> None:
         """download data here"""
@@ -67,7 +68,7 @@ class PointDataModule(BaseDataModule):
         dataset_size = self.batch_gen_train.dims[BATCHDIM]
 
         traindata = PointDataset(
-            self.batch_gen_train, BATCHDIM, dataset_size, transform=UnitVectorNorm()
+            self.batch_gen_train, BATCHDIM, dataset_size, transform=Normalize()
         )
         # self.data_test=traindata = XarrayDataset(self.batch_gen_test)
 

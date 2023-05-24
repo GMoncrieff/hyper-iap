@@ -2,7 +2,7 @@ from argparse import Namespace
 from torch.utils.data import random_split
 from hyperiap.datasets.xarray_dataset import XarrayDataset
 from hyperiap.datasets.base_module import BaseDataModule
-from hyperiap.datasets.transforms import UnitVectorNorm
+from hyperiap.datasets.transforms import UnitVectorNorm, Normalize
 
 from typing import Optional
 
@@ -14,7 +14,8 @@ import xarray as xr
 SPLIT = 0.2
 # 0 -> 52
 N_CLASS = 53
-N_BAND = 267
+N_BAND = 202
+# N_BAND = 267
 N_DIM = 9
 BATCH_SIZE = 4
 
@@ -55,7 +56,7 @@ class XarrayDataModule(BaseDataModule):
         #    print(f'Test data file {self.full_test_file} not found')
 
         # store wl for later use
-        self.wl = self.batch_gen_train.wl.values
+        self.wl = self.batch_gen_train.sel(wl=slice(0, 2.0)).wl.values
 
     def prepare_data(self, *args, **kwargs) -> None:
         """download data here"""
@@ -73,7 +74,7 @@ class XarrayDataModule(BaseDataModule):
             BATCHDIM,
             dataset_size,
             CHUNKS[BATCHDIM],
-            transform=UnitVectorNorm(),
+            transform=Normalize(),
         )
         # self.data_test = XarrayDataset(self.batch_gen_test)
 

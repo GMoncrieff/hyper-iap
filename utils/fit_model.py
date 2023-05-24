@@ -64,12 +64,14 @@ def fit(
 
     # setup transfer model if finetuning
     if bool(checkpoint):
+        print("loading checkpoint: ", checkpoint)
         seq_model = lit_model.load_from_checkpoint(checkpoint, args=args, model=model)
         transfer = setup_transfer_from_args(
             args, seq_model.model, data, model_module=module
         )
         seq_model = lit_model(args=args, model=transfer)
     else:
+        print("no checkpoint found, training from scratch")
         seq_model = lit_model(args=args, model=model)
 
     # setup callbacks

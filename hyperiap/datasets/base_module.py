@@ -82,6 +82,7 @@ class BaseDataModule(pl.LightningDataModule):
         return DataLoader(
             self.data_train,
             shuffle=True,
+            drop_last=True,
             num_workers=self.num_workers,
             pin_memory=self.on_gpu,
             batch_size=self.batch_size,

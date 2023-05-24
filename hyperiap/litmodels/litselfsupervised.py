@@ -85,10 +85,9 @@ class LitSelfSupervised(LitBaseModel):
 
         self.log(f"{self.ss_monitor}val_loss", loss, prog_bar=True, sync_dist=True)
 
-        if self.wandb:
-            wandb_logger = self.logger.experiment
+        if self.wandb and batch_idx == 0:
             patch = self.patch_length
-            fig = self._plot_hyperspec(
+            self._plot_hyperspec(
                 pred_pixel.cpu(),
                 masked_pixel.cpu(),
                 patches.cpu(),
@@ -97,8 +96,8 @@ class LitSelfSupervised(LitBaseModel):
                 unmasked_indices.cpu(),
                 self.data_config["wl"],
                 patch,
+                self.logger.experiment,
             )
-            wandb_logger.log({"plot": wandb.Image(fig)})
 
         outputs = {"loss": loss}
 
@@ -127,15 +126,16 @@ class LitSelfSupervised(LitBaseModel):
         unmasked_indices,
         wl,
         patch,
+        logger,
         length=P_LENGTH,
     ):
         # get random samples
         # batch len
-        # blen = range(patches.shape[0])
-        # samp = random.sample(blen, length)
+        blen = range(patches.shape[0])
+        samp = random.sample(blen, length)
 
         # or hardcode
-        samp = [0, 24, 36, 58, 72, 88]
+        # samp = [0, 24, 36, 58, 72, 88]
 
         # nbands
         # zdim = number of pixels per samples
@@ -171,7 +171,7 @@ class LitSelfSupervised(LitBaseModel):
             .detach()
             .numpy()
         )
-        p_mask = p_mask[samp, 0, :] / 10000
+        p_mask = p_mask[samp, 0, :]
 
         # unwrap actual masked pixels values
         mask = (
@@ -180,12 +180,12 @@ class LitSelfSupervised(LitBaseModel):
             .detach()
             .numpy()
         )
-        mask = mask[samp, 0, :] / 10000
+        mask = mask[samp, 0, :]
 
         # unwrap notmasked pixel values
         unmask = patches[batch_range, unmasked_indices]
         unmask = rearrange(unmask, "b c (p z) -> b z (c p)", p=patch).detach().numpy()
-        unmask = unmask[samp, 0, :] / 10000
+        unmask = unmask[samp, 0, :]
 
         fig, axs = plt.subplots(
             nrows=2, ncols=length // 2, sharex=True, sharey=True, figsize=(12, 3)
@@ -250,8 +250,9 @@ class LitSelfSupervised(LitBaseModel):
                         color="purple",
                         linestyle="-",
                     )
-
-        return fig
+        logger.log({"plot": wandb.Image(fig)})
+        plt.close("all")
+        return None
 
     @staticmethod
     def add_to_argparse(parser):
