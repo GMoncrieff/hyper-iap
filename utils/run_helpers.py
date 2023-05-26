@@ -68,14 +68,14 @@ def setup_parser(
     # Add Trainer specific arguments, such as --max_epochs, --gpus, --precision
     trainer_group.add_argument(
         "--limit_val_batches",
-        type=float,
-        default=1.0,
+        type=int,
+        default=10,
         help="limit_val_batches",
     )
     trainer_group.add_argument(
         "--limit_train_batches",
-        type=float,
-        default=1.0,
+        type=int,
+        default=10,
         help="limit_train_batches",
     )
     trainer_group.add_argument(

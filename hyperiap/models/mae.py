@@ -6,11 +6,11 @@ from hyperiap.models.vit import Transformer
 
 from argparse import Namespace
 
-DECODER_DIM = 512
+DECODER_DIM = 128
 MASKING_RATIO = 0.75
-DECODER_DEPTH = 2
+DECODER_DEPTH = 1
 DECODER_HEADS = 4
-DECODER_DIM_HEAD = 128
+DECODER_DIM_HEAD = 32
 
 
 class MAE(nn.Module):

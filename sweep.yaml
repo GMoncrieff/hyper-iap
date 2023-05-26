@@ -53,11 +53,11 @@ parameters:
     # MAE hyperparameters
     ###########################
     decoder_dim:
-        values: [512]
-    decoder_dim_head:
         values: [128]
+    decoder_dim_head:
+        values: [32]
     decoder_depth:
-        values: [2]
+        values: [1]
     decoder_heads:
         values: [4]
     masking_ratio:
@@ -66,13 +66,13 @@ parameters:
     # ViT hyperparameters
     ###########################
     dim:
-        values: [128]
+        values: [128,256]
     dim_head:
-        values: [32]
+        values: [16,32]
     patch_len:
         values: [2, 4, 6]
     mlp_dim:
-        values: [32]
+        values: [16,32]
     dropout:
         values: [0, 0.2]
     emb_dropout:
