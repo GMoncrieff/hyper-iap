@@ -17,14 +17,14 @@ N_CLASS = 53
 N_BAND = 202
 # N_BAND = 267
 N_DIM = 9
-BATCH_SIZE = 4
+BATCH_SIZE = 1
 
 PROCESSED_PROJECT = "science-sharing"
 # PROCESSED_TRAIN_PATH = "gcs://fran-share/clean_batched_torch.zarr"
 PROCESSED_TRAIN_PATH = "data/clean_batched_torch.zarr"
 
 XDIM, YDIM, WLDIM, BATCHDIM = "x_batch", "y_batch", "wl", "input_batch"
-CHUNKS = {XDIM: -1, YDIM: -1, WLDIM: -1, BATCHDIM: 1000}
+CHUNKS = {XDIM: -1, YDIM: -1, WLDIM: -1, BATCHDIM: 10000}
 
 
 class XarrayDataModule(BaseDataModule):

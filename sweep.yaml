@@ -47,8 +47,6 @@ parameters:
         values: [0.0001, 0.001]
     lr_ft:
         values: [0.00001, 0.0001]
-    label_smooth:
-        values: [0.0]
     ###########################
     # MAE hyperparameters
     ###########################
@@ -61,16 +59,16 @@ parameters:
     decoder_heads:
         values: [4]
     masking_ratio:
-        values: [0.75,0.85,0.95]
+        values: [0.75, 0.95]
     ###########################
     # ViT hyperparameters
     ###########################
     dim:
-        values: [128,256]
+        values: [128]
     dim_head:
         values: [16,32]
     patch_len:
-        values: [2, 4, 6]
+        values: [3, 5]
     mlp_dim:
         values: [16,32]
     dropout:
