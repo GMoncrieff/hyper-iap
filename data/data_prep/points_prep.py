@@ -51,6 +51,7 @@ dsx = dsx.where(
 # open labels
 ############
 points = gpd.read_file("https://storage.googleapis.com/fran-share/points.gpkg")
+points = points.to_crs("EPSG:32734")
 
 # drop some classes
 points = points[~points["class"].isin(["rock", "shade", "Pine"])]

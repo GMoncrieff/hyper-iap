@@ -1,0 +1,31 @@
+# first we specify what we're sweeping
+# we specify a program to run
+program: run_xgb.py
+# we optionally specify how to run it, including setting default arguments
+command:  
+    - ${env}
+    - ${interpreter}
+    - ${program}
+    - "--wandb_run"
+    - ${args}  # these arguments come from the sweep parameters below
+
+# and we specify which parameters to sweep over, what we're optimizing, and how we want to optimize it
+method: random  # generally, random searches perform well, can also be "grid" or "bayes"
+metric:
+    name: final_loss
+    goal: minimize
+parameters:  
+    ##########################
+    # xbghyperparameters
+    ###########################
+
+    max_depth:
+        values: [3, 5, 7, 10]
+    min_child_weight:
+        values: [1, 3, 5]
+    gamma:
+        values: [0, 0.1, 0.2]
+    eta:
+        values: [0.1, 0.3, 0.5, 0.7, 0.99]
+    dstype:
+        values: ["all","single","deriv"]

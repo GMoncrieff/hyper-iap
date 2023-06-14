@@ -23,8 +23,6 @@ DATA_CLASS_MODULE = "hyperiap.datasets"
 MODEL_CLASS_MODULE = "hyperiap.models"
 
 # for reproducibility
-np.random.seed(42)
-torch.manual_seed(42)
 pl.seed_everything(1234)
 torch.set_float32_matmul_precision("medium")
 

@@ -16,13 +16,12 @@ command:
     - "--max_epochs_clean"
     - "2000"
     - "--val_check_interval"
-    - "0.5"
+    - "1.0"
     - "--gradient_clip_val"
     - "0.5"
     - "--precision"
     - "16"
-    - "--run_ss" 
-    - "--run_noisy"
+    - "--run_ss"
     - "--run_clean"
     - ${args}  # these arguments come from the sweep parameters below
 
@@ -36,7 +35,7 @@ parameters:
     # pipeline hyperparameters
     ###########################
     ls_modifier:
-        values: [0.0, 0.1, 0.2]
+        values: [0.0, 0.2]
     ##########################
     # litmodel hyperparameters
     ###########################
@@ -46,7 +45,7 @@ parameters:
     lr:
         values: [0.0001, 0.001]
     lr_ft:
-        values: [0.00001, 0.0001]
+        values: [0.0001, 0.00001]
     ###########################
     # MAE hyperparameters
     ###########################

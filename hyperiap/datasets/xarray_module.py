@@ -17,7 +17,7 @@ N_CLASS = 53
 N_BAND = 202
 # N_BAND = 267
 N_DIM = 9
-BATCH_SIZE = 1
+BATCH_SIZE = 2
 
 PROCESSED_PROJECT = "science-sharing"
 # PROCESSED_TRAIN_PATH = "gcs://fran-share/clean_batched_torch.zarr"

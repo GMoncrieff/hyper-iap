@@ -148,14 +148,14 @@ def setup_parser(
     setup_group.add_argument(
         "--run_ss",
         action="store_true",
-        default=True,
+        default=False,
         help="run ss training",
     )
     # do we run noisy training
     setup_group.add_argument(
         "--run_noisy",
         action="store_true",
-        default=True,
+        default=False,
         help="run noisy training",
     )
     # do we run clean training

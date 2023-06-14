@@ -19,8 +19,8 @@ N_BAND = 202
 # N_BAND = 267
 N_DIM = 9
 
-# PROCESSED_TEST_DATA = "gcs://fran-share/fran_pixsample.zarr"
-PROCESSED_TRAIN_DATA = "data/test_fran_pixsample.zarr"
+PROCESSED_TEST_DATA = "data/fran_testsample.zarr"
+PROCESSED_TRAIN_DATA = "data/fran_pixsample.zarr"
 WLDIM, ZDIM, BATCHDIM = "wl", "z", "index"
 CHUNKS = {ZDIM: -1, WLDIM: -1, BATCHDIM: 32}
 
@@ -46,12 +46,12 @@ class PointDataModule(BaseDataModule):
             #   backend_kwargs={"storage_options": {"project": PROCESSED_PROJECT, "token": 'anon'}},engine="zarr")
             self.batch_gen_train = xr.open_dataset(PROCESSED_TRAIN_DATA, chunks=CHUNKS)
         except FileNotFoundError:
-            print(f"Train data file {self.full_train_file} not found")
+            print(f"Train data file {PROCESSED_TRAIN_DATA} not found")
 
-        # try:
-        #    testdata = xr.open_zarr(self.full_test_file)
-        # except FileNotFoundError:
-        #    print(f'Test data file {self.full_test_file} not found')
+        try:
+            self.batch_gen_test = xr.open_dataset(PROCESSED_TEST_DATA, chunks=CHUNKS)
+        except FileNotFoundError:
+            print(f"Test data file {PROCESSED_TEST_DATA} not found")
 
         # store wl for later use
         self.wl = self.batch_gen_train.sel(wl=slice(0, 2.1)).wl.values
@@ -66,11 +66,14 @@ class PointDataModule(BaseDataModule):
         Split the dataset into train/val/test."""
 
         dataset_size = self.batch_gen_train.dims[BATCHDIM]
+        test_dataset_size = self.batch_gen_test.dims[BATCHDIM]
 
         traindata = PointDataset(
             self.batch_gen_train, BATCHDIM, dataset_size, transform=Normalize()
         )
-        # self.data_test=traindata = XarrayDataset(self.batch_gen_test)
+        self.data_test = PointDataset(
+            self.batch_gen_test, BATCHDIM, test_dataset_size, transform=Normalize()
+        )
 
         split = int(np.floor(self.split * dataset_size))
 
@@ -85,7 +88,7 @@ class PointDataModule(BaseDataModule):
             "--split",
             type=float,
             default=SPLIT,
-            help=f"timeseries test/val split. Default is {SPLIT}",
+            help=f"test/val split. Default is {SPLIT}",
         )
         parser.add_argument(
             "--batch_size",
