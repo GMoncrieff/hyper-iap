@@ -100,7 +100,9 @@ def test_transfer_vit_classifier():
 
     model = LitSelfSupervised(ss_model)
 
-    trainer = Trainer(limit_train_batches=2, limit_val_batches=2, max_epochs=4)
+    trainer = Trainer(
+        limit_train_batches=2, limit_val_batches=2, max_epochs=4, accelerator="cpu"
+    )
     trainer.fit(model, datamodule=xmod)
 
     # fine tune
@@ -108,6 +110,7 @@ def test_transfer_vit_classifier():
         max_epochs=4,
         limit_train_batches=2,
         limit_val_batches=2,
+        accelerator="cpu",
         callbacks=[FinetuningScheduler(ft_schedule=ft_schedule_name)],
     )
     model_ft = TransferLearningVIT(encoder, data_config=xmod.config())
@@ -160,7 +163,9 @@ def test_transfer_tempcnn_classifier():
     # pre-train
     xmod = XarrayDataModule()
     litmodel = LitClassifier(TEMPCNN(data_config=xmod.config()))
-    trainer = Trainer(limit_train_batches=2, limit_val_batches=2, max_epochs=4)
+    trainer = Trainer(
+        limit_train_batches=2, limit_val_batches=2, max_epochs=4, accelerator="cpu"
+    )
     trainer.fit(litmodel, datamodule=xmod)
 
     # fine tune
@@ -168,6 +173,7 @@ def test_transfer_tempcnn_classifier():
         max_epochs=4,
         limit_train_batches=2,
         limit_val_batches=2,
+        accelerator="cpu",
         callbacks=[FinetuningScheduler(ft_schedule=ft_schedule_name)],
     )
     model_ft = TransferLearningTempCNN(litmodel.model, data_config=xmod.config())

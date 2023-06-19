@@ -14,7 +14,7 @@ command:
     - "--max_epochs_noisy"
     - "5"
     - "--max_epochs_clean"
-    - "2000"
+    - "1000"
     - "--val_check_interval"
     - "1.0"
     - "--gradient_clip_val"
@@ -22,6 +22,7 @@ command:
     - "--precision"
     - "16"
     - "--run_ss"
+    - "--run_noisy"
     - "--run_clean"
     - ${args}  # these arguments come from the sweep parameters below
 
@@ -67,7 +68,7 @@ parameters:
     dim_head:
         values: [16,32]
     patch_len:
-        values: [3, 5]
+        values: [5, 7]
     mlp_dim:
         values: [16,32]
     dropout:

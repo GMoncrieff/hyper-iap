@@ -12,11 +12,13 @@ from os.path import dirname, abspath
 import xarray as xr
 
 SPLIT = 0.2
-# 0 -> 52
 N_CLASS = 53
 N_BAND = 202
 # N_BAND = 267
 N_DIM = 9
+# tempcnn
+# BATCH_SIZE = 2
+# vit
 BATCH_SIZE = 2
 
 PROCESSED_PROJECT = "science-sharing"

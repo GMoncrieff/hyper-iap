@@ -38,12 +38,12 @@ jobs:
 
     - name: Test 1-stage
       run: |
-        python run_all.py --model_class=vit.simpleVIT --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5
+        python train.py --model_class=vit.simpleVIT --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5
 
     - name: Test 2-stage
       run: |
-        python run_all.py --model_class=vit.simpleVIT --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5 --run_noisy --run_clean
+        python train.py --model_class=vit.simpleVIT --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5 --run_noisy --run_clean
 
     - name: Test 3-stage
       run: |
-        python run_all.py --model_class=vit.simpleVIT --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5 --run_ss --run_noisy --run_clean
+        python train.py --model_class=vit.simpleVIT --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5 --run_ss --run_noisy --run_clean
