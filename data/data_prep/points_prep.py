@@ -50,30 +50,31 @@ dsx = dsx.where(
 
 # open labels
 ############
-points = gpd.read_file("https://storage.googleapis.com/fran-share/points.gpkg")
+points = gpd.read_file("https://storage.googleapis.com/fran-share/all.gpkg")
 points = points.to_crs("EPSG:32734")
 
-# drop some classes
-points = points[~points["class"].isin(["rock", "shade", "Pine"])]
+
+# drop some classes if needed
+# points = points[~points["class"].isin([0,4,9])]
 
 # encode code column
 le = LabelEncoder()
 points["label"] = le.fit_transform(points["class"])
 
+
 # drop na labels
-points = points.query("label != 9")
+# points = points.query("label < 11")
 
 # save name mapping
 # Create a dictionary of the label-to-class mapping
-label_to_class = {
-    label: original_class for label, original_class in enumerate(le.classes_)
-}
+# label_to_class = {
+#    str(label): str(original_class) for label, original_class in enumerate(le.classes_)
+# }
 
-# Remove the final class from the dictionary
-del label_to_class[max(label_to_class)]
 
-with open("data/name_mapping.json", "w") as outfile:
-    json.dump(label_to_class, outfile)
+# dump a file mapping labels to classes
+# with open("data/class_mapping.json", "w") as outfile:
+#    json.dump(label_to_class, outfile)
 
 # get neighbour pixels
 #####################
@@ -98,29 +99,56 @@ y_indexer = xr.DataArray(ydims, dims=["z", "index"])
 # select data at x and y coords
 xdp = dsx.sel(x=x_indexer, y=y_indexer, method="nearest").load()
 
-# add label column
-points = points["label"].to_xarray()
-xdp = xdp.merge(points)
+
+# add label and group column
+pointsl = points["label"].to_xarray()
+pointsg = points["group"].to_xarray()
+xdg = xdp.merge(pointsl).merge(pointsg)
 
 # clean up
-xdp = xdp.dropna(dim="index", how="any")
+xdg = xdg.dropna(dim="index", how="any")
+
 
 # drop chunks encoding
-del xdp.x.encoding["chunks"]
-del xdp.x.encoding["preferred_chunks"]
-del xdp.y.encoding["chunks"]
-del xdp.y.encoding["preferred_chunks"]
-del xdp.label.encoding["chunks"]
-del xdp.label.encoding["preferred_chunks"]
-del xdp.index.encoding["chunks"]
-del xdp.index.encoding["preferred_chunks"]
+del xdg.x.encoding["chunks"]
+del xdg.x.encoding["preferred_chunks"]
+del xdg.y.encoding["chunks"]
+del xdg.y.encoding["preferred_chunks"]
 
-# rechunnk
-xdp = xdp.chunk({"index": 32, "wl": -1, "z": -1})
+# filter to test/train/val and chunk
+xval = (
+    xdg.where(xdg.group == 0, drop=True)
+    .drop("group")
+    .chunk({"index": 32, "wl": -1, "z": -1})
+)
+xtest = (
+    xdg.where(xdg.group == 1, drop=True)
+    .drop("group")
+    .chunk({"index": 32, "wl": -1, "z": -1})
+)
+xtr = (
+    xdg.where(xdg.group == 2, drop=True)
+    .drop("group")
+    .chunk({"index": 32, "wl": -1, "z": -1})
+)
 
 # write data
-xdp.to_zarr(
-    "gcs://fran-share/fran_pixsample.zarr",
+xval.to_zarr(
+    "gcs://fran-share/fran_valsample.zarr",
+    consolidated=True,
+    storage_options={"project": "science-sharing", "token": "anon"},
+)
+
+# write data
+xtest.to_zarr(
+    "gcs://fran-share/fran_testsample.zarr",
+    consolidated=True,
+    storage_options={"project": "science-sharing", "token": "anon"},
+)
+
+# write data
+xtr.to_zarr(
+    "gcs://fran-share/fran_trainsample.zarr",
     consolidated=True,
     storage_options={"project": "science-sharing", "token": "anon"},
 )

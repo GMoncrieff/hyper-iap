@@ -1,6 +1,6 @@
 # first we specify what we're sweeping
 # we specify a program to run
-program: run_all.py
+program: train.py
 # we optionally specify how to run it, including setting default arguments
 command:  
     - ${env}

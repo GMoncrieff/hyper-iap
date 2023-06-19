@@ -98,9 +98,7 @@ class LitClassifier(LitBaseModel):
         self.test_acc(logits, y)
 
         self.log(f"{self.monitor}test_loss", loss, on_step=False, on_epoch=True)
-        self.log(
-            f"{self.monitor}test_loss", self.test_acc, on_step=False, on_epoch=True
-        )
+        self.log(f"{self.monitor}test_acc", self.test_acc, on_step=False, on_epoch=True)
 
     @staticmethod
     def add_to_argparse(parser):

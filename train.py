@@ -32,7 +32,7 @@ def main():
      Run an experiment.
      Sample command:
      ```
-     python run_all.py --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml
+     python train.py --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml
      ```
      For basic help documentation, run the command
      ```
@@ -44,11 +44,11 @@ def main():
      provide values for those arguments before invoking --help, like so:
      ```
         # a simple run
-        python run_all.py --model_class=vit.simpleVIT \
+        python train.py --model_class=vit.simpleVIT \
             --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5
 
         # a run with all stages
-        python run_all.py --model_class=vit.simpleVIT \
+        python train.py --model_class=vit.simpleVIT \
             --limit_val_batches=3 --limit_train_batches=3 --val_check_interval=1.0\
             --lr=0.001 --lr_ss=0.001 --lr_ft=0.0001 \
             --max_epochs_ss=2 --max_epochs_noisy=2 --max_epochs_clean=5 --log_every_n_steps=5\
@@ -56,7 +56,7 @@ def main():
             --run_ss --run_noisy --run_clean --precision=16
 
         # a run with tempcnn
-        python run_all.py --model_class=tempcnn.TEMPCNN \
+        python train.py --model_class=tempcnn.TEMPCNN \
             --limit_val_batches=2 --limit_train_batches=5 \
             --lr_ft=0.0000001 \
             --max_epochs_noisy=10 --max_epochs_clean=6 --log_every_n_steps=1 \
