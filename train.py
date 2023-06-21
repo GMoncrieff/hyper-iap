@@ -126,7 +126,7 @@ def main():
         else:
             max_epoch = arg_groups["Trainer Args"].max_epochs
 
-        checkpoint, best_val_loss = fit(
+        checkpoint, best_val_target = fit(
             args=args,
             arg_groups=arg_groups,
             data=data,
@@ -152,7 +152,7 @@ def main():
         else:
             max_epoch = arg_groups["Trainer Args"].max_epochs
 
-        checkpoint, best_val_loss = fit(
+        checkpoint, best_val_target = fit(
             args=args,
             arg_groups=arg_groups,
             data=data,
@@ -187,7 +187,7 @@ def main():
             # otherwise we create a fresh model
             clean_model = point_model
 
-        checkpoint, best_val_loss = fit(
+        checkpoint, best_val_target = fit(
             args=args,
             arg_groups=arg_groups,
             data=point,
@@ -206,7 +206,7 @@ def main():
 
     if args.wandb:
         # log best validation loss at end of pipeline
-        wandb.log({"final_loss": best_val_loss})
+        wandb.log({"final_target": best_val_target})
         # end wandb experiment
         wandb.finish()
 

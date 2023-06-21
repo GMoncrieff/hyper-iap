@@ -6,7 +6,7 @@ import torch
 from einops import rearrange
 import numpy as np
 import xgboost as xgb
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 
 
 from wandb.xgboost import WandbCallback
@@ -159,15 +159,17 @@ def main(wandb_run, dstype, max_depth, eta, min_child_weight, gamma):
     lloss = model.eval(dval)
     y_val_pred = model.predict(dval)
     accuracy = accuracy_score(y_val, y_val_pred)
+    # f1 score
+    f1 = f1_score(y_val, y_val_pred, average="micro")
     start = lloss.find("mlogloss:") + len("mlogloss:")
     number = float(lloss[start:])
 
     if wandb_run:
-        wandb.log({"loss": number, "accuracy": accuracy})
-        wandb.log({"final_loss": number})
+        wandb.log({"loss": number, "accuracy": accuracy, "f1": f1})
+        wandb.log({"final_target": f1})
         wandb.finish()
 
-    print(f"final_loss: {number}, accuracy: {accuracy}")
+    print(f"loss: {number}, accuracy: {accuracy}, f1: {f1}")
 
 
 if __name__ == "__main__":

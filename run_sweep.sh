@@ -1,3 +1,3 @@
-wandb sweep sweep_xgboost.yaml --project hyperiap --verbose
-wandb agent --project hyperiap --entity glennwithtwons --count=50 il0fmnd0
-wandb sweep --stop glennwithtwons/hyperiap/il0fmnd0
+wandb sweep sweep_vit.yaml --project hyperiap --verbose
+wandb agent --project hyperiap --entity glennwithtwons --count=10 ki2bw88l
+wandb sweep --stop glennwithtwons/hyperiap/ki2bw88l

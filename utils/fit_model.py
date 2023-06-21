@@ -81,7 +81,7 @@ def fit(
         model=seq_model,
         finetune=bool(checkpoint),
         append=f"_{stage}",
-        log_metric=f"{stage}_val_loss",
+        log_metric=f"{stage}_val_target",
     )
     callbacks.append(checkpoint_callback)
 
@@ -93,7 +93,7 @@ def fit(
     trainer.fit(seq_model, datamodule=data)
 
     new_checkpoint = checkpoint_callback.best_model_path
-    best_val_loss = checkpoint_callback.best_model_score.item()
+    best_val_target = checkpoint_callback.best_model_score.item()
 
     # resave checkpoint in format useable for finetuning if training is self supervised
     if stage == "ss":
@@ -111,4 +111,4 @@ def fit(
             new_checkpoint = logger.log_dir + "/ss_classifier.ckpt"
         trainer.save_checkpoint(new_checkpoint)
 
-    return new_checkpoint, best_val_loss
+    return new_checkpoint, best_val_target

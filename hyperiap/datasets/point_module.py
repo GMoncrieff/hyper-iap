@@ -9,6 +9,7 @@ from typing import Optional
 import numpy as np
 import xarray as xr
 import torch
+import json
 
 BATCH_SIZE = 64
 # 0->8
@@ -20,6 +21,7 @@ N_DIM = 9
 PROCESSED_TEST_DATA = "data/fran_testsample.zarr"
 PROCESSED_TRAIN_DATA = "data/fran_trainsample.zarr"
 PROCESSED_VALID_DATA = "data/fran_validsample.zarr"
+CLASS_NAMES = "data/name_mapping.json"
 WLDIM, ZDIM, BATCHDIM = "wl", "z", "index"
 CHUNKS = {ZDIM: -1, WLDIM: -1, BATCHDIM: 32}
 
@@ -51,6 +53,13 @@ class PointDataModule(BaseDataModule):
             self.batch_gen_test = xr.open_dataset(PROCESSED_TEST_DATA, chunks=CHUNKS)
         except FileNotFoundError:
             print(f"Test data file {PROCESSED_TEST_DATA} not found")
+
+        # get class names
+        try:
+            class_dict = json.load(open(CLASS_NAMES))
+            self.class_names = list(class_dict.values())
+        except FileNotFoundError:
+            print(f"class names file {CLASS_NAMES} not found")
 
         # store wl for later use
         self.wl = self.batch_gen_train.sel(wl=slice(0, 2.1)).wl.values

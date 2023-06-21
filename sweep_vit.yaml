@@ -29,14 +29,14 @@ command:
 # and we specify which parameters to sweep over, what we're optimizing, and how we want to optimize it
 method: random  # generally, random searches perform well, can also be "grid" or "bayes"
 metric:
-    name: final_loss
-    goal: minimize
+    name: final_target
+    goal: maximize
 parameters:  
     ##########################
     # pipeline hyperparameters
     ###########################
     ls_modifier:
-        values: [0.0, 0.2]
+        values: [0.0, 0.1, 0.2]
     ##########################
     # litmodel hyperparameters
     ###########################
@@ -59,7 +59,7 @@ parameters:
     decoder_heads:
         values: [4]
     masking_ratio:
-        values: [0.75, 0.95]
+        values: [0.95]
     ###########################
     # ViT hyperparameters
     ###########################

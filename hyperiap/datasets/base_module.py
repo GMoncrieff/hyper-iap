@@ -1,6 +1,6 @@
 from argparse import Namespace
 import os
-from typing import Optional
+from typing import Optional, List
 
 import lightning as pl
 import torch
@@ -37,6 +37,7 @@ class BaseDataModule(pl.LightningDataModule):
         self.num_classes: int
         self.num_bands: int
         self.num_dim: int
+        self.class_names: List[str]
         self.data_train: Dataset
         self.data_val: Dataset
         self.data_test: Dataset
@@ -64,6 +65,7 @@ class BaseDataModule(pl.LightningDataModule):
             "num_bands": self.num_bands,
             "num_dim": self.num_dim,
             "wl": self.wl,
+            "class_names": self.class_names,
         }
 
     def prepare_data(self, *args, **kwargs) -> None:

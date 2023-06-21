@@ -12,8 +12,8 @@ command:
 # and we specify which parameters to sweep over, what we're optimizing, and how we want to optimize it
 method: random  # generally, random searches perform well, can also be "grid" or "bayes"
 metric:
-    name: final_loss
-    goal: minimize
+    name: final_target
+    goal: maximize
 parameters:  
     ##########################
     # xbghyperparameters

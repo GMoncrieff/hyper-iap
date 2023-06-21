@@ -38,6 +38,7 @@ class XarrayDataModule(BaseDataModule):
         self.num_classes = N_CLASS
         self.num_bands = N_BAND
         self.num_dim = N_DIM
+        self.class_names = [""] * N_CLASS
         self.batch_size = self.args.get("batch_size", BATCH_SIZE)
 
         self.data_train = None
