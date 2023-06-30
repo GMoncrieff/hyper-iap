@@ -23,9 +23,8 @@ DATA_CLASS_MODULE = "hyperiap.datasets"
 MODEL_CLASS_MODULE = "hyperiap.models"
 
 # for reproducibility
-np.random.seed(42)
-torch.manual_seed(42)
 pl.seed_everything(1234)
+torch.set_float32_matmul_precision("medium")
 
 
 def main():
@@ -33,7 +32,7 @@ def main():
      Run an experiment.
      Sample command:
      ```
-     python run_all.py --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml
+     python train.py --ft_schedule=hyperiap/litmodels/LitClassifier_ft_schedule_final.yaml
      ```
      For basic help documentation, run the command
      ```
@@ -45,20 +44,20 @@ def main():
      provide values for those arguments before invoking --help, like so:
      ```
         # a simple run
-        python run_all.py --model_class=vit.simpleVIT \
+        python train.py --model_class=vit.simpleVIT \
             --limit_val_batches=5 --limit_train_batches=10 --max_epochs=5
 
         # a run with all stages
-        python run_all.py --model_class=vit.simpleVIT \
-            --limit_val_batches=5 --limit_train_batches=10 \
-            --lr=0.1 --lr_ss=0.1 --lr_ft=0.00001 \
-            --max_epochs_ss=10 --max_epochs_noisy=10 --max_epochs_clean=6 --log_every_n_steps=1\
+        python train.py --model_class=vit.simpleVIT \
+            --limit_val_batches=5 --limit_train_batches=5 --val_check_interval=1.0\
+            --lr=0.001 --lr_ss=0.001 --lr_ft=0.0001 \
+            --max_epochs_ss=2 --max_epochs_noisy=2 --max_epochs_clean=10 --log_every_n_steps=5\
             --ft_schedule=hyperiap/litmodels/LitClassifier_vit_ft_schedule.yaml \
-            --wandb --run_ss --run_noisy --run_clean --precision=16
+            --run_noisy --run_ss --run_clean --precision=16
 
         # a run with tempcnn
-        python run_all.py --model_class=tempcnn.TEMPCNN \
-            --limit_val_batches=5 --limit_train_batches=10 \
+        python train.py --model_class=tempcnn.TEMPCNN \
+            --limit_val_batches=2 --limit_train_batches=5 \
             --lr_ft=0.0000001 \
             --max_epochs_noisy=10 --max_epochs_clean=6 --log_every_n_steps=1 \
             --transfer_class=tempcnn.TransferLearningTempCNN \
@@ -127,7 +126,7 @@ def main():
         else:
             max_epoch = arg_groups["Trainer Args"].max_epochs
 
-        checkpoint, best_val_loss = fit(
+        checkpoint, best_val_target, _ = fit(
             args=args,
             arg_groups=arg_groups,
             data=data,
@@ -153,7 +152,7 @@ def main():
         else:
             max_epoch = arg_groups["Trainer Args"].max_epochs
 
-        checkpoint, best_val_loss = fit(
+        checkpoint, best_val_target, _ = fit(
             args=args,
             arg_groups=arg_groups,
             data=data,
@@ -166,6 +165,8 @@ def main():
             checkpoint=checkpoint,
             lsmooth=args.ls_modifier,
             run_id=run_id,
+            logmetric="val_loss",
+            mode="min",
         )
 
         print("noisy model checkpoint: ", checkpoint)
@@ -188,7 +189,7 @@ def main():
             # otherwise we create a fresh model
             clean_model = point_model
 
-        checkpoint, best_val_loss = fit(
+        final_checkpoint, best_val_target, valid = fit(
             args=args,
             arg_groups=arg_groups,
             data=point,
@@ -199,14 +200,37 @@ def main():
             lit_sup_model=seq_model_class,
             lit_ss_model=ss_model_class,
             checkpoint=checkpoint,
+            lsmooth=args.ls_modifier,
             run_id=run_id,
+            logmetric="val_loss",
+            mode="min",
         )
 
-        print("clean model checkpoint: ", checkpoint)
+        print("clean model checkpoint: ", final_checkpoint)
 
     if args.wandb:
+        # predict on validation set with best model
+        final_seq_model = seq_model_class.load_from_checkpoint(
+            final_checkpoint, args=args, model=point_model
+        )
+        trainer = pl.Trainer()
+        pred = trainer.predict(final_seq_model, point)
+        pred_arr = np.concatenate(pred, axis=1)
+
+        # log conf mat
+        wandb.log(
+            {
+                "clean_valid_conf_mat": wandb.plot.confusion_matrix(
+                    y_true=pred_arr[0, :],
+                    preds=pred_arr[1, :],
+                    class_names=final_seq_model.class_names,
+                )
+            }
+        )
+
         # log best validation loss at end of pipeline
-        wandb.log({"test_loss": best_val_loss})
+        wandb.log({"final_target": valid[0].get("clean_val_f1")})
+        wandb.log({"final_loss": best_val_target})
         # end wandb experiment
         wandb.finish()
 

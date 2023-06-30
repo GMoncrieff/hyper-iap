@@ -2,7 +2,7 @@ from argparse import Namespace
 from torch.utils.data import random_split
 from hyperiap.datasets.xarray_dataset import XarrayDataset
 from hyperiap.datasets.base_module import BaseDataModule
-from hyperiap.datasets.transforms import UnitVectorNorm
+from hyperiap.datasets.transforms import UnitVectorNorm, Normalize
 
 from typing import Optional
 
@@ -12,18 +12,21 @@ from os.path import dirname, abspath
 import xarray as xr
 
 SPLIT = 0.2
-# 0 -> 52
 N_CLASS = 53
-N_BAND = 267
+N_BAND = 202
+# N_BAND = 267
 N_DIM = 9
-BATCH_SIZE = 1
+# tempcnn
+# BATCH_SIZE = 2
+# vit
+BATCH_SIZE = 2
 
 PROCESSED_PROJECT = "science-sharing"
 # PROCESSED_TRAIN_PATH = "gcs://fran-share/clean_batched_torch.zarr"
-PROCESSED_TRAIN_PATH = "data/test_torch_batched.zarr"
+PROCESSED_TRAIN_PATH = "data/clean_batched_torch.zarr"
 
 XDIM, YDIM, WLDIM, BATCHDIM = "x_batch", "y_batch", "wl", "input_batch"
-CHUNKS = {XDIM: -1, YDIM: -1, WLDIM: -1, BATCHDIM: 100}
+CHUNKS = {XDIM: -1, YDIM: -1, WLDIM: -1, BATCHDIM: 10000}
 
 
 class XarrayDataModule(BaseDataModule):
@@ -35,6 +38,7 @@ class XarrayDataModule(BaseDataModule):
         self.num_classes = N_CLASS
         self.num_bands = N_BAND
         self.num_dim = N_DIM
+        self.class_names = [""] * N_CLASS
         self.batch_size = self.args.get("batch_size", BATCH_SIZE)
 
         self.data_train = None
@@ -55,7 +59,7 @@ class XarrayDataModule(BaseDataModule):
         #    print(f'Test data file {self.full_test_file} not found')
 
         # store wl for later use
-        self.wl = self.batch_gen_train.wl.values
+        self.wl = self.batch_gen_train.sel(wl=slice(0, 2.0)).wl.values
 
     def prepare_data(self, *args, **kwargs) -> None:
         """download data here"""
@@ -73,7 +77,7 @@ class XarrayDataModule(BaseDataModule):
             BATCHDIM,
             dataset_size,
             CHUNKS[BATCHDIM],
-            transform=UnitVectorNorm(),
+            transform=Normalize(),
         )
         # self.data_test = XarrayDataset(self.batch_gen_test)
 

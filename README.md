@@ -9,7 +9,7 @@
 </div>
  
 ## Description   
-This package is intented for running deep learning classifiers on hyperspectral data for mapping invasive alien plants. Models are pretrained on noisy land cover label data and then fine-tuned using point labels. The package is designed to be suffiently general that any geospatial classification problem with point labels or raster can be handled.
+This package is intended for running deep learning classifiers on hyperspectral data for mapping invasive alien plants. Models are pretrained using self-supervision and/or noisy land cover label data and then fine-tuned using point labels.
 
 **Currently this package is under heavy development**
 
@@ -17,7 +17,6 @@ This package is intented for running deep learning classifiers on hyperspectral 
 Current and planned data sources, models and module features are indicated below
 
 #### Data sources
-- [x] Timeseries
 - [ ] Sentinel 2
 - [x] Hyperspectral
 #### Models
@@ -28,7 +27,7 @@ Current and planned data sources, models and module features are indicated below
 #### Module features
 
 - [x] Logging with W&B
-- [ ] Hyperparameter tuning with W&B sweeps
+- [x] Hyperparameter tuning with W&B sweeps
 
 ## Getting started
 First, install dependencies   
@@ -42,30 +41,26 @@ pip install -r requirements.txt
  ```   
  Next, train classifiers using the command line.   
  ```bash
-python run_classifier.py --model_class=tempcnn.TEMPCNN --data_class=timeseries_module.TimeSeriesDataModule    
+python train.py --model_class=vit.simpleVIT   
 ```
 For a full list of command line options run
  ```bash
-python run_classifier.py --help
+python train.py --help
 ```
 
 ## Imports
 You can also import individual modules and incorporate them into python workflows
 ```python
-from pytorch_lightning import Trainer, seed_everything
-from hyperiap.models.tempcnn import TEMPCNN
+from lightning import Trainer, seed_everything
+from hyperiap.models.vit import simpleVIT
+from hyperiap.datasets.xarray_module import XarrayDataModule
+from hyperiap.litmodels.litclassifier import LitClassifier
 
-from hyperiap.models.baseclassifier import BaseClassifier
-from hyperiap.datasets.timeseries_module import TimeSeriesDataModule
-
-#setup data module
-ts = TimeSeriesDataModule()
-#setup model
-model = BaseClassifier(TEMPCNN(data_config=ts.config()))
-#setup trainer
-trainer = Trainer(max_epochs=10)
-#Train!
-trainer.fit(model, datamodule=ts)
+xmod = XarrayDataModule()
+model = LitClassifier(simpleVIT(data_config=xmod.config()))
+trainer = Trainer(limit_train_batches=5, limit_val_batches=3, max_epochs=2)
+trainer.fit(model, datamodule=xmod)
+trainer.validate(datamodule=xmod)
 ```
 
 ## Acknowledgements
@@ -79,10 +74,6 @@ The module builds on contributions and implementations from :
 * [Full Stack Deep Learning](https://github.com/full-stack-deep-learning/fsdl-text-recognizer-2022)
 * [xbatcher](https://github.com/xarray-contrib/xbatcher)
 * [zen3geo](https://github.com/weiji14/zen3geo)
-  
 
-The alien plant label data originates from : 
-* [Holden et al., 2021](https://www.sciencedirect.com/science/article/abs/pii/S2352938520306236)  
-
-With the land cover labels used from pre-training from
+The land cover labels used from pre-training from
 * [The South African Department of Forestry, Fisheries and the Environment ](https://egis.environment.gov.za/sa_national_land_cover_datasets)

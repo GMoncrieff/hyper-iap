@@ -2,24 +2,26 @@ from argparse import Namespace
 from torch.utils.data import random_split
 from hyperiap.datasets.point_dataset import PointDataset
 from hyperiap.datasets.base_module import BaseDataModule
-from hyperiap.datasets.transforms import UnitVectorNorm
+from hyperiap.datasets.transforms import UnitVectorNorm, Normalize
 
 from typing import Optional
 
 import numpy as np
 import xarray as xr
 import torch
+import json
 
-BATCH_SIZE = 32
-
-SPLIT = 0.2
+BATCH_SIZE = 64
 # 0->8
-N_CLASS = 9
-N_BAND = 267
+N_CLASS = 11
+N_BAND = 202
+# N_BAND = 267
 N_DIM = 9
 
-# PROCESSED_TEST_DATA = "gcs://fran-share/fran_pixsample.zarr"
-PROCESSED_TRAIN_DATA = "data/test_fran_pixsample.zarr"
+PROCESSED_TEST_DATA = "data/fran_testsample.zarr"
+PROCESSED_TRAIN_DATA = "data/fran_trainsample.zarr"
+PROCESSED_VALID_DATA = "data/fran_valsample.zarr"
+CLASS_NAMES = "data/name_mapping.json"
 WLDIM, ZDIM, BATCHDIM = "wl", "z", "index"
 CHUNKS = {ZDIM: -1, WLDIM: -1, BATCHDIM: 32}
 
@@ -30,7 +32,6 @@ class PointDataModule(BaseDataModule):
     def __init__(self, args: Namespace = None) -> None:
         super().__init__(args)
         self.batch_size = self.args.get("batch_size", BATCH_SIZE)
-        self.split = self.args.get("split", SPLIT)
         self.num_classes = N_CLASS
         self.num_bands = N_BAND
         self.num_dim = N_DIM
@@ -41,19 +42,27 @@ class PointDataModule(BaseDataModule):
 
         # load data
         try:
-            # self.batch_gen_train = xr.open_dataset(PROCESSED_TRAIN_PATH,chunks=CHUNKS,
-            #   backend_kwargs={"storage_options": {"project": PROCESSED_PROJECT, "token": 'anon'}},engine="zarr")
             self.batch_gen_train = xr.open_dataset(PROCESSED_TRAIN_DATA, chunks=CHUNKS)
         except FileNotFoundError:
-            print(f"Train data file {self.full_train_file} not found")
+            print(f"Train data file {PROCESSED_TRAIN_DATA} not found")
+        try:
+            self.batch_gen_valid = xr.open_dataset(PROCESSED_VALID_DATA, chunks=CHUNKS)
+        except FileNotFoundError:
+            print(f"Valid data file {PROCESSED_VALID_DATA} not found")
+        try:
+            self.batch_gen_test = xr.open_dataset(PROCESSED_TEST_DATA, chunks=CHUNKS)
+        except FileNotFoundError:
+            print(f"Test data file {PROCESSED_TEST_DATA} not found")
 
-        # try:
-        #    testdata = xr.open_zarr(self.full_test_file)
-        # except FileNotFoundError:
-        #    print(f'Test data file {self.full_test_file} not found')
+        # get class names
+        try:
+            class_dict = json.load(open(CLASS_NAMES))
+            self.class_names = list(class_dict.values())
+        except FileNotFoundError:
+            print(f"class names file {CLASS_NAMES} not found")
 
         # store wl for later use
-        self.wl = self.batch_gen_train.wl.values
+        self.wl = self.batch_gen_train.sel(wl=slice(0, 2.1)).wl.values
 
     def prepare_data(self, *args, **kwargs) -> None:
         """download data here"""
@@ -64,28 +73,23 @@ class PointDataModule(BaseDataModule):
         Setup Datasets
         Split the dataset into train/val/test."""
 
-        dataset_size = self.batch_gen_train.dims[BATCHDIM]
+        train_dataset_size = self.batch_gen_train.dims[BATCHDIM]
+        valid_dataset_size = self.batch_gen_valid.dims[BATCHDIM]
+        test_dataset_size = self.batch_gen_test.dims[BATCHDIM]
 
-        traindata = PointDataset(
-            self.batch_gen_train, BATCHDIM, dataset_size, transform=UnitVectorNorm()
+        self.data_train = PointDataset(
+            self.batch_gen_train, BATCHDIM, train_dataset_size, transform=Normalize()
         )
-        # self.data_test=traindata = XarrayDataset(self.batch_gen_test)
-
-        split = int(np.floor(self.split * dataset_size))
-
-        self.data_train, self.data_val = random_split(
-            traindata, [dataset_size - split, split]
+        self.data_val = PointDataset(
+            self.batch_gen_valid, BATCHDIM, valid_dataset_size, transform=Normalize()
+        )
+        self.data_test = PointDataset(
+            self.batch_gen_test, BATCHDIM, test_dataset_size, transform=Normalize()
         )
 
     @staticmethod
     def add_to_argparse(parser):
         BaseDataModule.add_to_argparse(parser)
-        parser.add_argument(
-            "--split",
-            type=float,
-            default=SPLIT,
-            help=f"timeseries test/val split. Default is {SPLIT}",
-        )
         parser.add_argument(
             "--batch_size",
             type=int,

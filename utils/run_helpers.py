@@ -5,6 +5,7 @@ import importlib
 from pathlib import Path
 import torch
 import lightning as pl
+from typing import Union
 
 from hyperiap.litmodels.litclassifier import LitClassifier
 from hyperiap.litmodels.litselfsupervised import LitSelfSupervised
@@ -67,15 +68,21 @@ def setup_parser(
     # Add Trainer specific arguments, such as --max_epochs, --gpus, --precision
     trainer_group.add_argument(
         "--limit_val_batches",
-        type=int,
-        default=2,
+        type=float,
+        default=1.0,
         help="limit_val_batches",
     )
     trainer_group.add_argument(
         "--limit_train_batches",
-        type=int,
-        default=2,
+        type=float,
+        default=1.0,
         help="limit_train_batches",
+    )
+    trainer_group.add_argument(
+        "--gradient_clip_val",
+        type=float,
+        default=0.5,
+        help="gradient_clip_val",
     )
     trainer_group.add_argument(
         "--max_epochs",
@@ -96,6 +103,12 @@ def setup_parser(
         help="--log_every_n_steps",
     )
     trainer_group.add_argument(
+        "--val_check_interval",
+        type=float,
+        default=0.5,
+        help="--val_check_interval",
+    )
+    trainer_group.add_argument(
         "--precision",
         type=int,
         default=32,
@@ -107,7 +120,7 @@ def setup_parser(
     setup_group.add_argument(
         "--ls_modifier",
         type=float,
-        default=0.2,
+        default=0.0,
         help="modifier for label smoothing when training on noisy labels",
     )
     # ss stage epochs
@@ -277,6 +290,7 @@ def setup_callbacks(
     append="",
     project="hyperiap",
     log_metric="val_loss",
+    mode="min",
 ):
     """Set up callbacks for training, including logging, checkpointing, and early stopping."""
 
@@ -301,7 +315,7 @@ def setup_callbacks(
             save_top_k=1,
             filename=filename_run,
             monitor=log_metric,
-            mode="min",
+            mode=mode,
             auto_insert_metric_name=False,
             dirpath=experiment_dir,
             every_n_epochs=args.check_val_every_n_epoch,
@@ -311,7 +325,7 @@ def setup_callbacks(
             save_top_k=1,
             filename=filename_run,
             monitor=log_metric,
-            mode="min",
+            mode=mode,
             auto_insert_metric_name=False,
             dirpath=experiment_dir,
             every_n_epochs=args.check_val_every_n_epoch,
@@ -325,7 +339,7 @@ def setup_callbacks(
 
     if args.stop_early:
         early_stopping_callback = pl.pytorch.callbacks.EarlyStopping(
-            monitor=log_metric, mode="min", patience=args.stop_early
+            monitor=log_metric, mode=mode, patience=args.stop_early
         )
         callbacks.append(early_stopping_callback)
 
@@ -333,7 +347,7 @@ def setup_callbacks(
         # open ft schedule and change lr
         with open(args.ft_schedule, "r") as file:
             data = yaml.safe_load(file)
-            data[0]["max_transition_epoch"] = int(args.max_epochs / 2)
+            data[0]["max_transition_epoch"] = max(1, int(args.max_epochs / 10))
             data[1]["max_transition_epoch"] = args.max_epochs
             data[1]["lr"] = args.lr_ft
 

@@ -1,83 +1,63 @@
 # first we specify what we're sweeping
 # we specify a program to run
-program: run_all.py
+program: train.py
 # we optionally specify how to run it, including setting default arguments
 command:  
     - ${env}
     - ${interpreter}
     - ${program}
     - "--wandb"
-    - "--limit_val_batches"
-    - "5"
-    - "--limit_train_batches"
-    - "5"
     - "--log_every_n_steps"
-    - "1"
-    - "--max_epochs_ss"
-    - "6"
+    - "50"
     - "--max_epochs_noisy"
-    - "6"
+    - "5"
     - "--max_epochs_clean"
-    - "6"
+    - "1000"
+    - "--val_check_interval"
+    - "1.0"
+    - "--gradient_clip_val"
+    - "0.5"
     - "--precision"
-    - "32"
-    - "--run_ss" 
-    - "--run_noisy"
+    - "16"
     - "--run_clean"
     - ${args}  # these arguments come from the sweep parameters below
 
 # and we specify which parameters to sweep over, what we're optimizing, and how we want to optimize it
 method: random  # generally, random searches perform well, can also be "grid" or "bayes"
 metric:
-    name: test_loss
-    goal: minimize
+    name: final_target
+    goal: maximize
 parameters:  
     ##########################
     # pipeline hyperparameters
     ###########################
     ls_modifier:
-        values: [0.0, 0.2]
+        values: [0.0, 0.1, 0.2]
     ##########################
     # litmodel hyperparameters
     ###########################
-    lr_ss:
-        values: [0.0001, 0.001]
+    #suggest 0.006
     lr:
-        values: [0.0001, 0.001]
+        values: [0.001, 0.01]
     lr_ft:
-        values: [0.00001, 0.0001]
-    label_smooth:
-        values: [0.0, 0.1]
+        values: [0.001, 0.0001]
     ###########################
-    # MAE hyperparameters
+    # CNN hyperparameters
     ###########################
-    decoder_dim:
-        values: [128, 512]
-    decoder_dim_head:
-        values: [32,128]
-    masking_ratio:
-        values: [0.6,0.75,0.9]
-    ###########################
-    # ViT hyperparameters
-    ###########################
-    dim:
-        values: [64,128]
-    dim_head:
-        values: [16,32]
-    patch_len:
-        values: [2, 4, 6]
-    mlp_dim:
-        values: [8,32]
+    hidden_dim:
+        values: [128,64,12]
+    kernel_size:
+        values: [3,5]
     dropout:
-        values: [0, 0.2]
-    emb_dropout:
         values: [0, 0.2]
     # we can also fix some values, just like we set default arguments
     #gpus:
     #    value: 1
     model_class:
-        value: vit.simpleVIT
+        value: tempcnn.TEMPCNN
+    transfer_class:
+        value: tempcnn.TransferLearningTempCNN
     data_class:
         value: xarray_module.XarrayDataModule
     ft_schedule:
-        value: hyperiap/litmodels/LitClassifier_vit_ft_schedule.yaml
+        value: hyperiap/litmodels/LitClassifier_tempcnn_ft_schedule.yaml
