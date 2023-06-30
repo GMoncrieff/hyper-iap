@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 import wandb
 from torchmetrics import Accuracy, F1Score
 from einops import rearrange
@@ -55,9 +56,17 @@ class LitClassifier(LitBaseModel):
         embedding = self.model(x)
         return embedding
 
-    def predict(self, x):
-        logits = self.model(x)
-        return torch.argmax(logits, dim=1)
+    def predict_step(self, batch, batch_idx):
+        x, y = batch
+        y = rearrange(y, "b1 b2 -> (b1 b2)")
+        x = rearrange(x, "b1 b2 z c -> (b1 b2) z c")
+        logits = self(x)
+        outputs = np.stack((y.cpu().numpy(), torch.argmax(logits, dim=1).cpu().numpy()))
+        return outputs
+
+    # def predict(self, x, y):
+    #    logits = self.model(x)
+    #    return y, torch.argmax(logits, dim=1)
 
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -104,23 +113,17 @@ class LitClassifier(LitBaseModel):
             on_epoch=True,
             prog_bar=True,
         )
-        self.log(
-            f"{self.monitor}val_target",
-            self.val_f1,
-            on_step=False,
-            on_epoch=True,
-            prog_bar=True,
-        )
 
-        self.logger.experiment.log(
-            {
-                f"{self.monitor}val_confmat": wandb.plot.confusion_matrix(
-                    probs=logits.cpu().numpy(),
-                    y_true=y.cpu().numpy(),
-                    class_names=self.class_names,
-                )
-            }
-        )
+        # if ((self.monitor == "clean_") and (self.args.get("wandb",False))):
+        #    self.logger.experiment.log(
+        #        {
+        #            f"{self.monitor}val_confmat": wandb.plot.confusion_matrix(
+        #                probs=logits.cpu().numpy(),
+        #                y_true=y.cpu().numpy(),
+        #                class_names=self.class_names,
+        #            )
+        #        }
+        #    )
 
         outputs = {"loss": loss}
 
@@ -140,15 +143,16 @@ class LitClassifier(LitBaseModel):
         self.log(f"{self.monitor}test_acc", self.test_acc, on_step=False, on_epoch=True)
         self.log(f"{self.monitor}test_f1", self.test_f1, on_step=False, on_epoch=True)
 
-        self.logger.experiment.log(
-            {
-                f"{self.monitor}test_confmat": wandb.plot.confusion_matrix(
-                    probs=logits.cpu().numpy(),
-                    y_true=y.cpu().numpy(),
-                    class_names=self.class_names,
-                )
-            }
-        )
+        # if ((self.monitor == "clean_") and (self.args.get("wandb",False))):
+        #    self.logger.experiment.log(
+        #        {
+        #            f"{self.monitor}test_confmat": wandb.plot.confusion_matrix(
+        #                probs=logits.cpu().numpy(),
+        #                y_true=y.cpu().numpy(),
+        #                class_names=self.class_names,
+        #            )
+        #        }
+        # )
 
     @staticmethod
     def add_to_argparse(parser):

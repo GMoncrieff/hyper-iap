@@ -9,16 +9,20 @@ command:
     - "--wandb"
     - "--log_every_n_steps"
     - "50"
+    - "--max_epochs_ss"
+    - "10"
     - "--max_epochs_noisy"
-    - "5"
+    - "10"
     - "--max_epochs_clean"
-    - "1000"
+    - "2000"
     - "--val_check_interval"
     - "1.0"
     - "--gradient_clip_val"
     - "0.5"
     - "--precision"
     - "16"
+    - "--run_noisy"
+    - "--run_ss"
     - "--run_clean"
     - ${args}  # these arguments come from the sweep parameters below
 
@@ -32,32 +36,51 @@ parameters:
     # pipeline hyperparameters
     ###########################
     ls_modifier:
-        values: [0.0, 0.1, 0.2]
+        values: [0.0]
     ##########################
     # litmodel hyperparameters
     ###########################
-    #suggest 0.006
+    #suggest 0.0006
+    lr_ss:
+        values: [0.00001]
     lr:
-        values: [0.001, 0.01]
+        values: [0.001]
     lr_ft:
-        values: [0.001, 0.0001]
+        values: [0.0001]
     ###########################
-    # CNN hyperparameters
+    # MAE hyperparameters
     ###########################
-    hidden_dim:
-        values: [128,64,12]
-    kernel_size:
-        values: [3,5]
+    decoder_dim:
+        values: [128]
+    decoder_dim_head:
+        values: [32]
+    decoder_depth:
+        values: [1]
+    decoder_heads:
+        values: [4]
+    masking_ratio:
+        values: [0.95]
+    ###########################
+    # ViT hyperparameters
+    ###########################
+    dim:
+        values: [128]
+    dim_head:
+        values: [16]
+    patch_len:
+        values: [5]
+    mlp_dim:
+        values: [32]
     dropout:
-        values: [0, 0.2]
+        values: [0.2]
+    emb_dropout:
+        values: [0]
     # we can also fix some values, just like we set default arguments
     #gpus:
     #    value: 1
     model_class:
-        value: tempcnn.TEMPCNN
-    transfer_class:
-        value: tempcnn.TransferLearningTempCNN
+        value: vit.simpleVIT
     data_class:
         value: xarray_module.XarrayDataModule
     ft_schedule:
-        value: hyperiap/litmodels/LitClassifier_tempcnn_ft_schedule.yaml
+        value: hyperiap/litmodels/LitClassifier_vit_ft_schedule.yaml

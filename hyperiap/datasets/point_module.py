@@ -20,7 +20,7 @@ N_DIM = 9
 
 PROCESSED_TEST_DATA = "data/fran_testsample.zarr"
 PROCESSED_TRAIN_DATA = "data/fran_trainsample.zarr"
-PROCESSED_VALID_DATA = "data/fran_validsample.zarr"
+PROCESSED_VALID_DATA = "data/fran_valsample.zarr"
 CLASS_NAMES = "data/name_mapping.json"
 WLDIM, ZDIM, BATCHDIM = "wl", "z", "index"
 CHUNKS = {ZDIM: -1, WLDIM: -1, BATCHDIM: 32}

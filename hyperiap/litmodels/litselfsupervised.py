@@ -84,7 +84,6 @@ class LitSelfSupervised(LitBaseModel):
         loss = self.loss_fn(pred_pixel, masked_pixel)
 
         self.log(f"{self.ss_monitor}val_loss", loss, prog_bar=True, sync_dist=True)
-        self.log(f"{self.ss_monitor}val_target", loss, prog_bar=True, sync_dist=True)
 
         if self.wandb and batch_idx == 0:
             patch = self.patch_length

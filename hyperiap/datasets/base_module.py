@@ -107,3 +107,12 @@ class BaseDataModule(pl.LightningDataModule):
             pin_memory=self.on_gpu,
             batch_size=self.batch_size,
         )
+
+    def predict_dataloader(self):
+        return DataLoader(
+            self.data_val,
+            shuffle=False,
+            num_workers=self.num_workers,
+            pin_memory=self.on_gpu,
+            batch_size=self.batch_size,
+        )

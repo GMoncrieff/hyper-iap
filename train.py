@@ -49,11 +49,11 @@ def main():
 
         # a run with all stages
         python train.py --model_class=vit.simpleVIT \
-            --limit_val_batches=3 --limit_train_batches=3 --val_check_interval=1.0\
+            --limit_val_batches=5 --limit_train_batches=5 --val_check_interval=1.0\
             --lr=0.001 --lr_ss=0.001 --lr_ft=0.0001 \
-            --max_epochs_ss=2 --max_epochs_noisy=2 --max_epochs_clean=5 --log_every_n_steps=5\
+            --max_epochs_ss=2 --max_epochs_noisy=2 --max_epochs_clean=10 --log_every_n_steps=5\
             --ft_schedule=hyperiap/litmodels/LitClassifier_vit_ft_schedule.yaml \
-            --run_ss --run_noisy --run_clean --precision=16
+            --run_noisy --run_ss --run_clean --precision=16
 
         # a run with tempcnn
         python train.py --model_class=tempcnn.TEMPCNN \
@@ -126,7 +126,7 @@ def main():
         else:
             max_epoch = arg_groups["Trainer Args"].max_epochs
 
-        checkpoint, best_val_target = fit(
+        checkpoint, best_val_target, _ = fit(
             args=args,
             arg_groups=arg_groups,
             data=data,
@@ -152,7 +152,7 @@ def main():
         else:
             max_epoch = arg_groups["Trainer Args"].max_epochs
 
-        checkpoint, best_val_target = fit(
+        checkpoint, best_val_target, _ = fit(
             args=args,
             arg_groups=arg_groups,
             data=data,
@@ -165,6 +165,8 @@ def main():
             checkpoint=checkpoint,
             lsmooth=args.ls_modifier,
             run_id=run_id,
+            logmetric="val_loss",
+            mode="min",
         )
 
         print("noisy model checkpoint: ", checkpoint)
@@ -187,7 +189,7 @@ def main():
             # otherwise we create a fresh model
             clean_model = point_model
 
-        checkpoint, best_val_target = fit(
+        final_checkpoint, best_val_target, valid = fit(
             args=args,
             arg_groups=arg_groups,
             data=point,
@@ -200,13 +202,35 @@ def main():
             checkpoint=checkpoint,
             lsmooth=args.ls_modifier,
             run_id=run_id,
+            logmetric="val_loss",
+            mode="min",
         )
 
-        print("clean model checkpoint: ", checkpoint)
+        print("clean model checkpoint: ", final_checkpoint)
 
     if args.wandb:
+        # predict on validation set with best model
+        final_seq_model = seq_model_class.load_from_checkpoint(
+            final_checkpoint, args=args, model=point_model
+        )
+        trainer = pl.Trainer()
+        pred = trainer.predict(final_seq_model, point)
+        pred_arr = np.concatenate(pred, axis=1)
+
+        # log conf mat
+        wandb.log(
+            {
+                "clean_valid_conf_mat": wandb.plot.confusion_matrix(
+                    y_true=pred_arr[0, :],
+                    preds=pred_arr[1, :],
+                    class_names=final_seq_model.class_names,
+                )
+            }
+        )
+
         # log best validation loss at end of pipeline
-        wandb.log({"final_target": best_val_target})
+        wandb.log({"final_target": valid[0].get("clean_val_f1")})
+        wandb.log({"final_loss": best_val_target})
         # end wandb experiment
         wandb.finish()
 

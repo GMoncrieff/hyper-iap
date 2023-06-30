@@ -290,6 +290,7 @@ def setup_callbacks(
     append="",
     project="hyperiap",
     log_metric="val_loss",
+    mode="min",
 ):
     """Set up callbacks for training, including logging, checkpointing, and early stopping."""
 
@@ -314,7 +315,7 @@ def setup_callbacks(
             save_top_k=1,
             filename=filename_run,
             monitor=log_metric,
-            mode="min",
+            mode=mode,
             auto_insert_metric_name=False,
             dirpath=experiment_dir,
             every_n_epochs=args.check_val_every_n_epoch,
@@ -324,7 +325,7 @@ def setup_callbacks(
             save_top_k=1,
             filename=filename_run,
             monitor=log_metric,
-            mode="min",
+            mode=mode,
             auto_insert_metric_name=False,
             dirpath=experiment_dir,
             every_n_epochs=args.check_val_every_n_epoch,
@@ -338,7 +339,7 @@ def setup_callbacks(
 
     if args.stop_early:
         early_stopping_callback = pl.pytorch.callbacks.EarlyStopping(
-            monitor=log_metric, mode="min", patience=args.stop_early
+            monitor=log_metric, mode=mode, patience=args.stop_early
         )
         callbacks.append(early_stopping_callback)
 
@@ -346,7 +347,7 @@ def setup_callbacks(
         # open ft schedule and change lr
         with open(args.ft_schedule, "r") as file:
             data = yaml.safe_load(file)
-            data[0]["max_transition_epoch"] = max(1, int(args.max_epochs / 100))
+            data[0]["max_transition_epoch"] = max(1, int(args.max_epochs / 10))
             data[1]["max_transition_epoch"] = args.max_epochs
             data[1]["lr"] = args.lr_ft
 

@@ -21,8 +21,8 @@ command:
     - "0.5"
     - "--precision"
     - "16"
-    - "--run_ss"
     - "--run_noisy"
+    - "--run_ss"
     - "--run_clean"
     - ${args}  # these arguments come from the sweep parameters below
 
@@ -44,9 +44,9 @@ parameters:
     lr_ss:
         values: [0.00001]
     lr:
-        values: [0.0001, 0.001]
+        values: [0.001]
     lr_ft:
-        values: [0.0001, 0.00001]
+        values: [0.0001]
     ###########################
     # MAE hyperparameters
     ###########################
@@ -68,13 +68,13 @@ parameters:
     dim_head:
         values: [16,32]
     patch_len:
-        values: [5, 7]
+        values: [5]
     mlp_dim:
         values: [16,32]
     dropout:
         values: [0, 0.2]
     emb_dropout:
-        values: [0, 0.2]
+        values: [0]
     # we can also fix some values, just like we set default arguments
     #gpus:
     #    value: 1
