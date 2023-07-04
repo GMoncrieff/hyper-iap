@@ -13,11 +13,13 @@ seed_everything(1234)
 import pytest
 import types
 
+
 def pre_train(model, xmod, epochs):
     trainer = Trainer(
         limit_train_batches=2, limit_val_batches=2, max_epochs=epochs, accelerator="cpu"
     )
     trainer.fit(model, datamodule=xmod)
+
 
 def fine_tune(ft_schedule_name, model, xmod, epochs):
     trainer = Trainer(
@@ -30,14 +32,17 @@ def fine_tune(ft_schedule_name, model, xmod, epochs):
     trainer.fit(model, datamodule=xmod)
     return trainer.validate(datamodule=xmod)
 
-@pytest.mark.parametrize("model_func, config, encoder_func, transfer_func, schedule_yaml, epochs", [
-    # For the ViT classifier
-    (
-        lambda cfg: LitSelfSupervised(MAE(encoder=simpleVIT(data_config=cfg))),
-        {'test':1,'batch_size':2,'split':0.2},
-        simpleVIT,
-        TransferLearningVIT,
-        """
+
+@pytest.mark.parametrize(
+    "model_func, config, encoder_func, transfer_func, schedule_yaml, epochs",
+    [
+        # For the ViT classifier
+        (
+            lambda cfg: LitSelfSupervised(MAE(encoder=simpleVIT(data_config=cfg))),
+            {"test": 1, "batch_size": 2, "split": 0.2},
+            simpleVIT,
+            TransferLearningVIT,
+            """
     0:
         max_transition_epoch: 2
         params:
@@ -109,15 +114,15 @@ def fine_tune(ft_schedule_name, model, xmod, epochs):
         - model.embedding.transformer.layers.4.1.net.4.bias
 
     """,
-        4
-    ),
-    # For the TempCNN classifier
-    (
-        lambda cfg: LitClassifier(TEMPCNN(data_config=cfg)),
-        {'test':1,'batch_size':2,'split':0.2},
-        TEMPCNN,
-        TransferLearningTempCNN,
-                """
+            4,
+        ),
+        # For the TempCNN classifier
+        (
+            lambda cfg: LitClassifier(TEMPCNN(data_config=cfg)),
+            {"test": 1, "batch_size": 2, "split": 0.2},
+            TEMPCNN,
+            TransferLearningTempCNN,
+            """
     0:
         max_transition_epoch: 5
         params:
@@ -144,10 +149,13 @@ def fine_tune(ft_schedule_name, model, xmod, epochs):
         - model.extractor.conv_bn_relu1.block.0.bias
         - model.extractor.conv_bn_relu1.block.0.weight
     """,
-        4
-    )
-])
-def test_transfer(model_func, config, encoder_func, transfer_func, schedule_yaml, epochs):
+            4,
+        ),
+    ],
+)
+def test_transfer(
+    model_func, config, encoder_func, transfer_func, schedule_yaml, epochs
+):
     args = types.SimpleNamespace(**config)
     xmod = XarrayDataModule(args=args)
 
@@ -161,7 +169,9 @@ def test_transfer(model_func, config, encoder_func, transfer_func, schedule_yaml
     pre_train(model, xmod, epochs)
 
     # Fine tune
-    model_ft = transfer_func(encoder_func(data_config=xmod.config()), data_config=xmod.config())
+    model_ft = transfer_func(
+        encoder_func(data_config=xmod.config()), data_config=xmod.config()
+    )
     model_bc = LitClassifier(model_ft)
 
     x = fine_tune(ft_schedule_name, model_bc, xmod, epochs)

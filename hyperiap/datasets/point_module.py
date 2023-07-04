@@ -44,30 +44,42 @@ class PointDataModule(BaseDataModule):
         self.data_val = None
 
         # load data
-        if self.test==0:
+        if self.test == 0:
             try:
-                self.batch_gen_train = xr.open_dataset(PROCESSED_TRAIN_DATA, chunks=CHUNKS)
+                self.batch_gen_train = xr.open_dataset(
+                    PROCESSED_TRAIN_DATA, chunks=CHUNKS
+                )
             except FileNotFoundError:
                 print(f"Train data file {PROCESSED_TRAIN_DATA} not found")
             try:
-                self.batch_gen_valid = xr.open_dataset(PROCESSED_VALID_DATA, chunks=CHUNKS)
+                self.batch_gen_valid = xr.open_dataset(
+                    PROCESSED_VALID_DATA, chunks=CHUNKS
+                )
             except FileNotFoundError:
                 print(f"Valid data file {PROCESSED_VALID_DATA} not found")
             try:
-                self.batch_gen_test = xr.open_dataset(PROCESSED_TEST_DATA, chunks=CHUNKS)
+                self.batch_gen_test = xr.open_dataset(
+                    PROCESSED_TEST_DATA, chunks=CHUNKS
+                )
             except FileNotFoundError:
                 print(f"Test data file {PROCESSED_TEST_DATA} not found")
         else:
             try:
-                self.batch_gen_train = xr.open_dataset(PROCESSED_TESTDATA_DATA, chunks=CHUNKS)
+                self.batch_gen_train = xr.open_dataset(
+                    PROCESSED_TESTDATA_DATA, chunks=CHUNKS
+                )
             except FileNotFoundError:
                 print(f"Testdata data file {PROCESSED_TESTDATA_DATA} not found")
             try:
-                self.batch_gen_valid = xr.open_dataset(PROCESSED_TESTDATA_DATA, chunks=CHUNKS)
+                self.batch_gen_valid = xr.open_dataset(
+                    PROCESSED_TESTDATA_DATA, chunks=CHUNKS
+                )
             except FileNotFoundError:
                 print(f"Testdata data file {PROCESSED_TESTDATA_DATA} not found")
             try:
-                self.batch_gen_test = xr.open_dataset(PROCESSED_TESTDATA_DATA, chunks=CHUNKS)
+                self.batch_gen_test = xr.open_dataset(
+                    PROCESSED_TESTDATA_DATA, chunks=CHUNKS
+                )
             except FileNotFoundError:
                 print(f"Testdata data file {PROCESSED_TESTDATA_DATA} not found")
 

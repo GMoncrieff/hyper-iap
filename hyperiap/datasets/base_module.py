@@ -108,6 +108,7 @@ class BaseDataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
         )
 
+
 #    def predict_dataloader(self):
 #        return DataLoader(
 #            self.data_test,

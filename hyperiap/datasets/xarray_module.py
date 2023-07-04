@@ -29,6 +29,7 @@ PROCESSED_TESTDATA_PATH = "data/test_torch_batched.zarr"
 XDIM, YDIM, WLDIM, BATCHDIM = "x_batch", "y_batch", "wl", "input_batch"
 TEST = 0
 
+
 class XarrayDataModule(BaseDataModule):
     """lightning data module for xarray data"""
 
@@ -47,19 +48,22 @@ class XarrayDataModule(BaseDataModule):
         self.data_val = None
 
         # load data
-        if self.test==0:
+        if self.test == 0:
             self.chunks = {XDIM: -1, YDIM: -1, WLDIM: -1, BATCHDIM: 10000}
             try:
-                self.batch_gen_train = xr.open_dataset(PROCESSED_TRAIN_PATH, chunks=self.chunks)
+                self.batch_gen_train = xr.open_dataset(
+                    PROCESSED_TRAIN_PATH, chunks=self.chunks
+                )
             except FileNotFoundError:
                 print(f"Train data file {PROCESSED_TRAIN_PATH} not found")
         else:
             self.chunks = {XDIM: -1, YDIM: -1, WLDIM: -1, BATCHDIM: 100}
             try:
-                self.batch_gen_train = xr.open_dataset(PROCESSED_TESTDATA_PATH, chunks=self.chunks)
+                self.batch_gen_train = xr.open_dataset(
+                    PROCESSED_TESTDATA_PATH, chunks=self.chunks
+                )
             except FileNotFoundError:
                 print(f"Testing data file {PROCESSED_TESTDATA_PATH} not found")
-            
 
         # try:
         #    testdata = xr.open_zarr(self.full_test_file)
@@ -78,7 +82,9 @@ class XarrayDataModule(BaseDataModule):
         Setup Datasets
         Split the dataset into train/val/test."""
 
-        dataset_size = (self.batch_gen_train.dims[BATCHDIM] // self.chunks[BATCHDIM]) - 1
+        dataset_size = (
+            self.batch_gen_train.dims[BATCHDIM] // self.chunks[BATCHDIM]
+        ) - 1
 
         traindata = XarrayDataset(
             self.batch_gen_train,

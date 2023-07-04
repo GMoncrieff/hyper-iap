@@ -61,9 +61,9 @@ class LitClassifier(LitBaseModel):
         y = rearrange(y, "b1 b2 -> (b1 b2)")
         x = rearrange(x, "b1 b2 z c -> (b1 b2) z c")
         logits = self(x)
-        #outputs = np.stack((y.cpu().numpy(), torch.argmax(logits, dim=1).cpu().numpy()))
+        # outputs = np.stack((y.cpu().numpy(), torch.argmax(logits, dim=1).cpu().numpy()))
         pred = F.softmax(logits, dim=-1).detach().cpu().numpy()
-        y=y.cpu().numpy()
+        y = y.cpu().numpy()
         return pred, y
 
     # def predict(self, x, y):

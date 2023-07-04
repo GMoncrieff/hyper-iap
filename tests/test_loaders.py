@@ -4,10 +4,18 @@ import types
 import pytest
 
 
-@pytest.mark.parametrize("data_module_class, config, y_shape, x_shape", [
-    (XarrayDataModule, {'test':1,'batch_size':2,'split':0.2}, [2, 100], [2, 100, 9, 202]),
-    (PointDataModule, {'test':1,'batch_size':64}, [64, 1], [64, 1, 9, 202]),
-])
+@pytest.mark.parametrize(
+    "data_module_class, config, y_shape, x_shape",
+    [
+        (
+            XarrayDataModule,
+            {"test": 1, "batch_size": 2, "split": 0.2},
+            [2, 100],
+            [2, 100, 9, 202],
+        ),
+        (PointDataModule, {"test": 1, "batch_size": 64}, [64, 1], [64, 1, 9, 202]),
+    ],
+)
 def test_data_loader(data_module_class, config, y_shape, x_shape):
     args = types.SimpleNamespace(**config)
     data = data_module_class(args=args)
