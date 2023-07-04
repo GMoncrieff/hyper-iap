@@ -25,7 +25,7 @@ PROCESSED_TESTDATA_DATA = "data/test_fran_pixsample.zarr"
 CLASS_NAMES = "data/name_mapping.json"
 WLDIM, ZDIM, BATCHDIM = "wl", "z", "index"
 CHUNKS = {ZDIM: -1, WLDIM: -1, BATCHDIM: 32}
-TEST = 0
+TESTDATA = 0
 
 
 class PointDataModule(BaseDataModule):
@@ -33,7 +33,7 @@ class PointDataModule(BaseDataModule):
 
     def __init__(self, args: Namespace = None) -> None:
         super().__init__(args)
-        self.test = self.args.get("test", TEST)
+        self.testdata = self.args.get("testdata", TESTDATA)
         self.batch_size = self.args.get("batch_size", BATCH_SIZE)
         self.num_classes = N_CLASS
         self.num_bands = N_BAND
@@ -44,7 +44,7 @@ class PointDataModule(BaseDataModule):
         self.data_val = None
 
         # load data
-        if self.test == 0:
+        if self.testdata == 0:
             try:
                 self.batch_gen_train = xr.open_dataset(
                     PROCESSED_TRAIN_DATA, chunks=CHUNKS
@@ -126,10 +126,10 @@ class PointDataModule(BaseDataModule):
             help=f"Number of examples to operate on per forward step. Default is {BATCH_SIZE}.",
         )
         parser.add_argument(
-            "--test",
+            "--testdata",
             type=int,
-            default=TEST,
-            help=f"0 = use full dataset, 1 = use small testing dataset. Default is {TEST}.",
+            default=TESTDATA,
+            help=f"0 = use full dataset, 1 = use small testing dataset. Default is {TESTDATA}.",
         )
         return parser
 

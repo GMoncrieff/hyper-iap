@@ -39,7 +39,7 @@ def fine_tune(ft_schedule_name, model, xmod, epochs):
         # For the ViT classifier
         (
             lambda cfg: LitSelfSupervised(MAE(encoder=simpleVIT(data_config=cfg))),
-            {"test": 1, "batch_size": 2, "split": 0.2},
+            {"testdata": 1, "batch_size": 2, "split": 0.2},
             simpleVIT,
             TransferLearningVIT,
             """
@@ -119,7 +119,7 @@ def fine_tune(ft_schedule_name, model, xmod, epochs):
         # For the TempCNN classifier
         (
             lambda cfg: LitClassifier(TEMPCNN(data_config=cfg)),
-            {"test": 1, "batch_size": 2, "split": 0.2},
+            {"testdata": 1, "batch_size": 2, "split": 0.2},
             TEMPCNN,
             TransferLearningTempCNN,
             """

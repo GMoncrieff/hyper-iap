@@ -27,7 +27,7 @@ PROCESSED_TRAIN_PATH = "data/clean_batched_torch.zarr"
 PROCESSED_TESTDATA_PATH = "data/test_torch_batched.zarr"
 
 XDIM, YDIM, WLDIM, BATCHDIM = "x_batch", "y_batch", "wl", "input_batch"
-TEST = 0
+TESTDATA = 0
 
 
 class XarrayDataModule(BaseDataModule):
@@ -35,7 +35,7 @@ class XarrayDataModule(BaseDataModule):
 
     def __init__(self, args: Namespace = None) -> None:
         super().__init__(args)
-        self.test = self.args.get("test", TEST)
+        self.testdata = self.args.get("testdata", TESTDATA)
         self.split = self.args.get("split", SPLIT)
         self.num_classes = N_CLASS
         self.num_bands = N_BAND
@@ -48,7 +48,7 @@ class XarrayDataModule(BaseDataModule):
         self.data_val = None
 
         # load data
-        if self.test == 0:
+        if self.testdata == 0:
             self.chunks = {XDIM: -1, YDIM: -1, WLDIM: -1, BATCHDIM: 10000}
             try:
                 self.batch_gen_train = xr.open_dataset(
@@ -117,10 +117,10 @@ class XarrayDataModule(BaseDataModule):
             help=f"Number of examples to operate on per forward step. Default is {BATCH_SIZE}.",
         )
         parser.add_argument(
-            "--test",
+            "--testdata",
             type=int,
-            default=TEST,
-            help=f"0 = use full dataset, 1 = use small testing dataset. Default is {TEST}.",
+            default=TESTDATA,
+            help=f"0 = use full dataset, 1 = use small testing dataset. Default is {TESTDATA}.",
         )
         return parser
 

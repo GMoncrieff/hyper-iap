@@ -27,19 +27,19 @@ def model_func_mae(encoder_constructor):
     [
         (
             XarrayDataModule,
-            {"test": 1, "batch_size": 2, "split": 0.2},
+            {"testdata": 1, "batch_size": 2, "split": 0.2},
             model_func_lit(TEMPCNN),
             "val_acc",
         ),
         (
             XarrayDataModule,
-            {"test": 1, "batch_size": 2, "split": 0.2},
+            {"testdata": 1, "batch_size": 2, "split": 0.2},
             model_func_lit(simpleVIT),
             "val_acc",
         ),
         (
             XarrayDataModule,
-            {"test": 1, "batch_size": 2, "split": 0.2},
+            {"testdata": 1, "batch_size": 2, "split": 0.2},
             model_func_mae(simpleVIT),
             "ss_val_loss",
         ),

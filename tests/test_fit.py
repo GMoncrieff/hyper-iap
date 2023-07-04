@@ -27,7 +27,7 @@ def test_fit():
     )
 
     args = parser.parse_args([])
-    args.test = 1
+    args.testdata = 1
     # split args into groups
     arg_groups = {}
 
