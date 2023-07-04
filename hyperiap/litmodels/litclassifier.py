@@ -4,7 +4,7 @@ import wandb
 from torchmetrics import Accuracy, F1Score
 from einops import rearrange
 from argparse import Namespace
-
+import torch.nn.functional as F
 from hyperiap.litmodels.litbasemodel import LitBaseModel
 
 LR = 1e-3
@@ -61,8 +61,10 @@ class LitClassifier(LitBaseModel):
         y = rearrange(y, "b1 b2 -> (b1 b2)")
         x = rearrange(x, "b1 b2 z c -> (b1 b2) z c")
         logits = self(x)
-        outputs = np.stack((y.cpu().numpy(), torch.argmax(logits, dim=1).cpu().numpy()))
-        return outputs
+        #outputs = np.stack((y.cpu().numpy(), torch.argmax(logits, dim=1).cpu().numpy()))
+        pred = F.softmax(logits, dim=-1).detach().cpu().numpy()
+        y=y.cpu().numpy()
+        return pred, y
 
     # def predict(self, x, y):
     #    logits = self.model(x)

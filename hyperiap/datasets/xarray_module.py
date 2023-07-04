@@ -24,16 +24,17 @@ BATCH_SIZE = 2
 PROCESSED_PROJECT = "science-sharing"
 # PROCESSED_TRAIN_PATH = "gcs://fran-share/clean_batched_torch.zarr"
 PROCESSED_TRAIN_PATH = "data/clean_batched_torch.zarr"
+PROCESSED_TESTDATA_PATH = "data/test_torch_batched.zarr"
 
 XDIM, YDIM, WLDIM, BATCHDIM = "x_batch", "y_batch", "wl", "input_batch"
-CHUNKS = {XDIM: -1, YDIM: -1, WLDIM: -1, BATCHDIM: 10000}
-
+TEST = 0
 
 class XarrayDataModule(BaseDataModule):
     """lightning data module for xarray data"""
 
     def __init__(self, args: Namespace = None) -> None:
         super().__init__(args)
+        self.test = self.args.get("test", TEST)
         self.split = self.args.get("split", SPLIT)
         self.num_classes = N_CLASS
         self.num_bands = N_BAND
@@ -46,12 +47,19 @@ class XarrayDataModule(BaseDataModule):
         self.data_val = None
 
         # load data
-        try:
-            # self.batch_gen_train = xr.open_dataset(PROCESSED_TRAIN_PATH,chunks=CHUNKS,
-            #   backend_kwargs={"storage_options": {"project": PROCESSED_PROJECT, "token": 'anon'}},engine="zarr")
-            self.batch_gen_train = xr.open_dataset(PROCESSED_TRAIN_PATH, chunks=CHUNKS)
-        except FileNotFoundError:
-            print(f"Train data file {self.full_train_file} not found")
+        if self.test==0:
+            self.chunks = {XDIM: -1, YDIM: -1, WLDIM: -1, BATCHDIM: 10000}
+            try:
+                self.batch_gen_train = xr.open_dataset(PROCESSED_TRAIN_PATH, chunks=self.chunks)
+            except FileNotFoundError:
+                print(f"Train data file {PROCESSED_TRAIN_PATH} not found")
+        else:
+            self.chunks = {XDIM: -1, YDIM: -1, WLDIM: -1, BATCHDIM: 100}
+            try:
+                self.batch_gen_train = xr.open_dataset(PROCESSED_TESTDATA_PATH, chunks=self.chunks)
+            except FileNotFoundError:
+                print(f"Testing data file {PROCESSED_TESTDATA_PATH} not found")
+            
 
         # try:
         #    testdata = xr.open_zarr(self.full_test_file)
@@ -70,13 +78,13 @@ class XarrayDataModule(BaseDataModule):
         Setup Datasets
         Split the dataset into train/val/test."""
 
-        dataset_size = (self.batch_gen_train.dims[BATCHDIM] // CHUNKS[BATCHDIM]) - 1
+        dataset_size = (self.batch_gen_train.dims[BATCHDIM] // self.chunks[BATCHDIM]) - 1
 
         traindata = XarrayDataset(
             self.batch_gen_train,
             BATCHDIM,
             dataset_size,
-            CHUNKS[BATCHDIM],
+            self.chunks[BATCHDIM],
             transform=Normalize(),
         )
         # self.data_test = XarrayDataset(self.batch_gen_test)
@@ -101,6 +109,12 @@ class XarrayDataModule(BaseDataModule):
             type=int,
             default=BATCH_SIZE,
             help=f"Number of examples to operate on per forward step. Default is {BATCH_SIZE}.",
+        )
+        parser.add_argument(
+            "--test",
+            type=int,
+            default=TEST,
+            help=f"0 = use full dataset, 1 = use small testing dataset. Default is {TEST}.",
         )
         return parser
 

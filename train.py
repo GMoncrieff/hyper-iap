@@ -62,7 +62,7 @@ def main():
             --max_epochs_noisy=10 --max_epochs_clean=6 --log_every_n_steps=1 \
             --transfer_class=tempcnn.TransferLearningTempCNN \
             --ft_schedule=hyperiap/litmodels/LitClassifier_tempcnn_ft_schedule.yaml \
-            --wandb --run_noisy --run_clean
+            --run_noisy --run_clean
     """
 
     # seed random with datetime
