@@ -27,7 +27,7 @@ def test_fit():
     )
 
     args = parser.parse_args([])
-
+    args.testdata = 1
     # split args into groups
     arg_groups = {}
 
@@ -48,8 +48,7 @@ def test_fit():
     ss_model_class = LitSelfSupervised
     log_dir = Path("training") / "logs"
     max_epoch = 5
-
-    checkpoint, best_val_loss = fit(
+    checkpoint, best_val_loss, _ = fit(
         args=args,
         arg_groups=arg_groups,
         data=data,

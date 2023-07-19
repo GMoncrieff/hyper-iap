@@ -2,6 +2,7 @@ import argparse
 from typing import Tuple
 import lightning as pl
 from hyperiap.datasets.point_module import PointDataModule
+from hyperiap.datasets.s2_module import S2DataModule
 import torch
 from einops import rearrange
 import numpy as np
@@ -93,7 +94,7 @@ def dataloader_to_numpy(
     return features_arr, labels_arr
 
 
-def main(wandb_run, dstype, max_depth, eta, min_child_weight, gamma):
+def main(wandb_run, loader, dstype, max_depth, eta, min_child_weight, gamma):
     """
     Main function to run the XGBoost model with specified parameters.
 
@@ -108,6 +109,7 @@ def main(wandb_run, dstype, max_depth, eta, min_child_weight, gamma):
 
     Parameters:
     wandb_run (bool): If True, wandb logging is enabled.
+    loader (str): Name of the dataloader to use for model training. S2 fr Sentinel2 or IS for Hyperspectral
     dstype (str): Type of data to use for model training. Passed to the 'dataloader_to_numpy' function.
     max_depth (int): Maximum depth of the XGBoost trees.
     eta (float): Learning rate for XGBoost.
@@ -124,7 +126,13 @@ def main(wandb_run, dstype, max_depth, eta, min_child_weight, gamma):
         wandb.init(project="hyperiap")
 
     # prepare dataloaders
-    xmod = PointDataModule()
+    if loader == "S2":
+        xmod = S2DataModule()
+    elif loader == "IS":
+        xmod = PointDataModule()
+    else:
+        raise ValueError("loader must be S2 or IS")
+
     xmod.setup()
     valloader = xmod.val_dataloader()
     trloader = xmod.train_dataloader()
@@ -142,7 +150,7 @@ def main(wandb_run, dstype, max_depth, eta, min_child_weight, gamma):
         "objective": "multi:softmax",
         "eval_metric": "mlogloss",
         "num_class": len(np.unique(y_train)),
-        "tree_method": "gpu_hist",
+        "tree_method": "hist",
     }
 
     # Train XGBoost model
@@ -175,6 +183,9 @@ def main(wandb_run, dstype, max_depth, eta, min_child_weight, gamma):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run XGBoost")
     parser.add_argument("--wandb_run", action="store_true", help="Use wandb")
+    parser.add_argument(
+        "--loader", type=str, default="IS", help="Dataloader to use. IS or S2"
+    )
     parser.add_argument("--dstype", type=str, default="all", help="Type of data to use")
     parser.add_argument("--max_depth", type=int, default=10, help="max_depth")
     parser.add_argument("--eta", type=float, default=0.3, help="eta")
@@ -186,6 +197,7 @@ if __name__ == "__main__":
 
     main(
         args.wandb_run,
+        args.loader,
         args.dstype,
         args.max_depth,
         args.eta,
