@@ -229,12 +229,19 @@ def setup_parser(
         default="hyperiap/litmodels/LitClassifier_vit_ft_schedule.yaml",
         help="path to schedule for finetuing",
     )
-    # lr finetune
+    # lr finetune noisy
     setup_group.add_argument(
-        "--lr_ft",
+        "--ft_lr_noisy",
         type=float,
         default=0.1,
-        help="finetuing learning rate",
+        help="finetuning learning rate, noisy stage",
+    )
+    # lr finetune clean
+    setup_group.add_argument(
+        "--ft_lr_clean",
+        type=float,
+        default=0.1,
+        help="finetuning learning rate, clean stage",
     )
     # early stopping
     setup_group.add_argument(
@@ -291,6 +298,7 @@ def setup_callbacks(
     project="hyperiap",
     log_metric="val_loss",
     mode="min",
+    stage="clean",
 ):
     """Set up callbacks for training, including logging, checkpointing, and early stopping."""
 
@@ -349,7 +357,11 @@ def setup_callbacks(
             data = yaml.safe_load(file)
             data[0]["max_transition_epoch"] = max(1, int(args.max_epochs / 10))
             data[1]["max_transition_epoch"] = args.max_epochs
-            data[1]["lr"] = args.lr_ft
+
+            if stage == "noisy":
+                data[1]["lr"] = args.ft_lr_noisy
+            else:
+                data[1]["lr"] = args.ft_lr_clean
 
         # create tempfile with new lr
         with tempfile.NamedTemporaryFile(

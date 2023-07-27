@@ -36,7 +36,7 @@ parameters:
     # pipeline hyperparameters
     ###########################
     ls_modifier:
-        values: [0.0, 0.1, 0.2]
+        values: [0.0, 0.1]
     ##########################
     # litmodel hyperparameters
     ###########################
@@ -45,8 +45,10 @@ parameters:
         values: [0.00001]
     lr:
         values: [0.001]
-    lr_ft:
+    ft_lr_noisy:
         values: [0.0001]
+    ft_lr_clean:
+        values: [0.000001, 0.00000001]
     ###########################
     # MAE hyperparameters
     ###########################
@@ -66,13 +68,13 @@ parameters:
     dim:
         values: [128]
     dim_head:
-        values: [16,32]
+        values: [16, 32]
     patch_len:
         values: [5]
     mlp_dim:
-        values: [16,32]
+        values: [32]
     dropout:
-        values: [0, 0.2]
+        values: [0.2]
     emb_dropout:
         values: [0]
     # we can also fix some values, just like we set default arguments

@@ -44,15 +44,21 @@ hyper-old/
 #data/
 media/
 wandb/
+artifacts/
 data/test_batched_torch.zarr/
 data/fran_pixsample_clean.zarr/
 data/fran_pixsample.zarr/
 data/fran_pixsample_clean.zarr/
 data/fran_testsample.zarr/
 data/fran_trainsample.zarr/
+data/prediction_gpu.zarr/
+data/prediction_small.zarr/
 data/fran_validsample.zarr/
 data/clean_batched_torch.zarr/
 hyperiap/callbacks/wandb_table.py
+data/cnn_*
+output.txt
+data/test_class.tif
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -142,3 +148,5 @@ lightning_logs/
 MNIST
 .DS_Store
 hyperiap/callbacks/wandb_table.py
+=2.4.2,
+data/input_batch.pickle

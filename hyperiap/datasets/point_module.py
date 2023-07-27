@@ -78,13 +78,13 @@ class PointDataModule(BaseDataModule):
         test_dataset_size = self.batch_gen_test.dims[BATCHDIM]
 
         self.data_train = PointDataset(
-            self.batch_gen_train, BATCHDIM, train_dataset_size, transform=Normalize()
+            self.batch_gen_train, BATCHDIM, train_dataset_size, transform=None
         )
         self.data_val = PointDataset(
-            self.batch_gen_valid, BATCHDIM, valid_dataset_size, transform=Normalize()
+            self.batch_gen_valid, BATCHDIM, valid_dataset_size, transform=None
         )
         self.data_test = PointDataset(
-            self.batch_gen_test, BATCHDIM, test_dataset_size, transform=Normalize()
+            self.batch_gen_test, BATCHDIM, test_dataset_size, transform=None
         )
 
     @staticmethod

@@ -32,7 +32,7 @@ class PointDataset(Dataset):
     def __getitem__(self, index):
         batch = self.dataset.isel({self.x_batch: index})
         batch = batch.sel(wl=slice(0, 2))
-        x_batch = np.expand_dims(batch[PREDICTOR_VAR].load().data, axis=2)
+        x_batch = np.expand_dims(batch[PREDICTOR_VAR].load().data, axis=2) / 10000
         y_batch = np.expand_dims(batch[LABEL_VAR].load().data, axis=0)
         x_batch = torch.from_numpy(x_batch)
         x_batch = rearrange(x_batch, "wl z b -> b z wl")

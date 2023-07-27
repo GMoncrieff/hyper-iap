@@ -24,7 +24,7 @@ MODEL_CLASS_MODULE = "hyperiap.models"
 
 # for reproducibility
 pl.seed_everything(1234)
-torch.set_float32_matmul_precision("medium")
+# torch.set_float32_matmul_precision("medium")
 
 
 def main():
@@ -50,15 +50,15 @@ def main():
         # a run with all stages
         python train.py --model_class=vit.simpleVIT \
             --limit_val_batches=5 --limit_train_batches=5 --val_check_interval=1.0\
-            --lr=0.001 --lr_ss=0.001 --lr_ft=0.0001 \
+            --lr=0.001 --lr_ss=0.001 --ft_lr_noisy=0.0001 --ft_lr_clean=0.0001 \
             --max_epochs_ss=2 --max_epochs_noisy=2 --max_epochs_clean=10 --log_every_n_steps=5\
             --ft_schedule=hyperiap/litmodels/LitClassifier_vit_ft_schedule.yaml \
-            --run_noisy --run_ss --run_clean --precision=16
+            --run_noisy --run_ss --run_clean --precision=32
 
         # a run with tempcnn
         python train.py --model_class=tempcnn.TEMPCNN \
             --limit_val_batches=2 --limit_train_batches=5 \
-            --lr_ft=0.0000001 \
+            --lr_ft_noisy=0.000001--lr_ft_clean=0.000001  \
             --max_epochs_noisy=10 --max_epochs_clean=6 --log_every_n_steps=1 \
             --transfer_class=tempcnn.TransferLearningTempCNN \
             --ft_schedule=hyperiap/litmodels/LitClassifier_tempcnn_ft_schedule.yaml \

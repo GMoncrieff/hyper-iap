@@ -77,7 +77,7 @@ class XarrayDataModule(BaseDataModule):
             BATCHDIM,
             dataset_size,
             CHUNKS[BATCHDIM],
-            transform=Normalize(),
+            transform=None,
         )
         # self.data_test = XarrayDataset(self.batch_gen_test)
 

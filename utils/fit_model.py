@@ -87,6 +87,7 @@ def fit(
         append=f"_{stage}",
         log_metric=f"{stage}_{logmetric}",
         mode=mode,
+        stage=stage,
     )
     callbacks.append(checkpoint_callback)
 
