@@ -29,3 +29,5 @@ parameters:
         values: [0.1, 0.3, 0.5, 0.7, 0.99]
     dstype:
         values: ["all","single","deriv"]
+    loader:
+        values: ["IS"]

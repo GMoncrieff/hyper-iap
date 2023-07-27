@@ -1,6 +1,6 @@
 from argparse import Namespace
 from torch.utils.data import random_split
-from hyperiap.datasets.point_dataset import PointDataset
+from hyperiap.datasets.s2_dataset import S2Dataset
 from hyperiap.datasets.base_module import BaseDataModule
 from hyperiap.datasets.transforms import UnitVectorNorm, Normalize
 
@@ -13,27 +13,24 @@ import json
 
 BATCH_SIZE = 64
 # 0->8
-N_CLASS = 11
-N_BAND = 202
+N_CLASS = 10
+N_BAND = 14
 # N_BAND = 267
-N_DIM = 9
+N_DIM = 1
 
-PROCESSED_TEST_DATA = "data/fran_testsample.zarr"
-PROCESSED_TRAIN_DATA = "data/fran_trainsample.zarr"
-PROCESSED_VALID_DATA = "data/fran_valsample.zarr"
-PROCESSED_TESTDATA_DATA = "data/test_fran_pixsample.zarr"
-CLASS_NAMES = "data/name_mapping.json"
+PROCESSED_TEST_DATA = "data/s2_testsample.zarr"
+PROCESSED_TRAIN_DATA = "data/s2_trainsample.zarr"
+PROCESSED_VALID_DATA = "data/s2_validsample.zarr"
+CLASS_NAMES = "data/s2_mapping.json"
 WLDIM, ZDIM, BATCHDIM = "wl", "z", "index"
 CHUNKS = {ZDIM: -1, WLDIM: -1, BATCHDIM: 32}
-TESTDATA = 0
 
 
-class PointDataModule(BaseDataModule):
+class S2DataModule(BaseDataModule):
     """lightning data module for xarray point data"""
 
     def __init__(self, args: Namespace = None) -> None:
         super().__init__(args)
-        self.testdata = self.args.get("testdata", TESTDATA)
         self.batch_size = self.args.get("batch_size", BATCH_SIZE)
         self.num_classes = N_CLASS
         self.num_bands = N_BAND
@@ -44,44 +41,18 @@ class PointDataModule(BaseDataModule):
         self.data_val = None
 
         # load data
-        if self.testdata == 0:
-            try:
-                self.batch_gen_train = xr.open_dataset(
-                    PROCESSED_TRAIN_DATA, chunks=CHUNKS
-                )
-            except FileNotFoundError:
-                print(f"Train data file {PROCESSED_TRAIN_DATA} not found")
-            try:
-                self.batch_gen_valid = xr.open_dataset(
-                    PROCESSED_VALID_DATA, chunks=CHUNKS
-                )
-            except FileNotFoundError:
-                print(f"Valid data file {PROCESSED_VALID_DATA} not found")
-            try:
-                self.batch_gen_test = xr.open_dataset(
-                    PROCESSED_TEST_DATA, chunks=CHUNKS
-                )
-            except FileNotFoundError:
-                print(f"Test data file {PROCESSED_TEST_DATA} not found")
-        else:
-            try:
-                self.batch_gen_train = xr.open_dataset(
-                    PROCESSED_TESTDATA_DATA, chunks=CHUNKS
-                )
-            except FileNotFoundError:
-                print(f"Testdata data file {PROCESSED_TESTDATA_DATA} not found")
-            try:
-                self.batch_gen_valid = xr.open_dataset(
-                    PROCESSED_TESTDATA_DATA, chunks=CHUNKS
-                )
-            except FileNotFoundError:
-                print(f"Testdata data file {PROCESSED_TESTDATA_DATA} not found")
-            try:
-                self.batch_gen_test = xr.open_dataset(
-                    PROCESSED_TESTDATA_DATA, chunks=CHUNKS
-                )
-            except FileNotFoundError:
-                print(f"Testdata data file {PROCESSED_TESTDATA_DATA} not found")
+        try:
+            self.batch_gen_train = xr.open_dataset(PROCESSED_TRAIN_DATA, chunks=CHUNKS)
+        except FileNotFoundError:
+            print(f"Train data file {PROCESSED_TRAIN_DATA} not found")
+        try:
+            self.batch_gen_valid = xr.open_dataset(PROCESSED_VALID_DATA, chunks=CHUNKS)
+        except FileNotFoundError:
+            print(f"Valid data file {PROCESSED_VALID_DATA} not found")
+        try:
+            self.batch_gen_test = xr.open_dataset(PROCESSED_TEST_DATA, chunks=CHUNKS)
+        except FileNotFoundError:
+            print(f"Test data file {PROCESSED_TEST_DATA} not found")
 
         # get class names
         try:
@@ -91,7 +62,7 @@ class PointDataModule(BaseDataModule):
             print(f"class names file {CLASS_NAMES} not found")
 
         # store wl for later use
-        self.wl = self.batch_gen_train.sel(wl=slice(0, 2.1)).wl.values
+        self.wl = self.batch_gen_train.wl.values
 
     def prepare_data(self, *args, **kwargs) -> None:
         """download data here"""
@@ -106,13 +77,13 @@ class PointDataModule(BaseDataModule):
         valid_dataset_size = self.batch_gen_valid.dims[BATCHDIM]
         test_dataset_size = self.batch_gen_test.dims[BATCHDIM]
 
-        self.data_train = PointDataset(
+        self.data_train = S2Dataset(
             self.batch_gen_train, BATCHDIM, train_dataset_size, transform=None
         )
-        self.data_val = PointDataset(
+        self.data_val = S2Dataset(
             self.batch_gen_valid, BATCHDIM, valid_dataset_size, transform=None
         )
-        self.data_test = PointDataset(
+        self.data_test = S2Dataset(
             self.batch_gen_test, BATCHDIM, test_dataset_size, transform=None
         )
 
@@ -124,12 +95,6 @@ class PointDataModule(BaseDataModule):
             type=int,
             default=BATCH_SIZE,
             help=f"Number of examples to operate on per forward step. Default is {BATCH_SIZE}.",
-        )
-        parser.add_argument(
-            "--testdata",
-            type=int,
-            default=TESTDATA,
-            help=f"0 = use full dataset, 1 = use small testing dataset. Default is {TESTDATA}.",
         )
         return parser
 

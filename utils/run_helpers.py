@@ -172,6 +172,13 @@ def setup_parser(
         default=False,
         help="run test data",
     )
+    # run on test data?
+    setup_group.add_argument(
+        "--testdata",
+        type=int,
+        default=0,
+        help="do we run on test data to run tests",
+    )
     # wandb_logger
     setup_group.add_argument(
         "--wandb",

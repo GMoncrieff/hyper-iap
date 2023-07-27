@@ -6,52 +6,55 @@ from hyperiap.datasets.xarray_module import XarrayDataModule
 
 from hyperiap.litmodels.litclassifier import LitClassifier
 from hyperiap.litmodels.litselfsupervised import LitSelfSupervised
+import types
+import pytest
 
 seed_everything(1234)
 
 
-def test_tempcnn_classifier():
+def model_func_lit(model_constructor):
+    return lambda xmod: LitClassifier(model_constructor(data_config=xmod.config()))
 
-    xmod = XarrayDataModule()
 
-    model = LitClassifier(TEMPCNN(data_config=xmod.config()))
+def model_func_mae(encoder_constructor):
+    return lambda xmod: LitSelfSupervised(
+        MAE(encoder=encoder_constructor(data_config=xmod.config()))
+    )
+
+
+@pytest.mark.parametrize(
+    "data_module_class, config, model_func, metric",
+    [
+        (
+            XarrayDataModule,
+            {"testdata": 1, "batch_size": 2, "split": 0.2},
+            model_func_lit(TEMPCNN),
+            "val_acc",
+        ),
+        (
+            XarrayDataModule,
+            {"testdata": 1, "batch_size": 2, "split": 0.2},
+            model_func_lit(simpleVIT),
+            "val_acc",
+        ),
+        (
+            XarrayDataModule,
+            {"testdata": 1, "batch_size": 2, "split": 0.2},
+            model_func_mae(simpleVIT),
+            "ss_val_loss",
+        ),
+    ],
+)
+def test_model(data_module_class, config, model_func, metric):
+    args = types.SimpleNamespace(**config)
+    data_module = data_module_class(args=args)
+
+    model = model_func(data_module)
 
     trainer = Trainer(
         limit_train_batches=5, limit_val_batches=3, max_epochs=2, accelerator="cpu"
     )
-    trainer.fit(model, datamodule=xmod)
-    x = trainer.validate(datamodule=xmod)
+    trainer.fit(model, datamodule=data_module)
+    validation_result = trainer.validate(datamodule=data_module)
 
-    assert x[0]["val_acc"] >= 0
-
-
-def test_vit_classifier():
-
-    xmod = XarrayDataModule()
-
-    model = LitClassifier(simpleVIT(data_config=xmod.config()))
-
-    trainer = Trainer(
-        limit_train_batches=5, limit_val_batches=3, max_epochs=2, accelerator="cpu"
-    )
-    trainer.fit(model, datamodule=xmod)
-    x = trainer.validate(datamodule=xmod)
-
-    assert x[0]["val_acc"] >= 0
-
-
-def test_mae_decoder():
-
-    xmod = XarrayDataModule()
-    encoder = simpleVIT(data_config=xmod.config())
-    ss_model = MAE(encoder=encoder)
-
-    model = LitSelfSupervised(ss_model)
-
-    trainer = Trainer(
-        limit_train_batches=5, limit_val_batches=3, max_epochs=2, accelerator="cpu"
-    )
-    trainer.fit(model, datamodule=xmod)
-    x = trainer.validate(datamodule=xmod)
-
-    assert x[0]["ss_val_loss"] >= 0
+    assert validation_result[0][metric] >= 0

@@ -41,6 +41,7 @@ processed/
 training/
 raw/
 hyper-old/
+
 #data/
 media/
 wandb/
@@ -59,6 +60,23 @@ hyperiap/callbacks/wandb_table.py
 data/cnn_*
 output.txt
 data/test_class.tif
+data/fran_pixsample_clean.zarr/
+data/fran_pixsample.zarr/
+data/pred_torch_batched.zarr/
+data/s2_pixels.zarr/
+data/s2_testsample.zarr/
+data/s2_trainsample.zarr/
+data/s2_validsample.zarr/
+data/fran_pixsample_clean.zarr/
+data/fran_testsample.zarr/
+data/fran_trainsample.zarr/
+data/fran_validsample.zarr/
+data/fran_valsample.zarr/
+data/clean_batched_torch.zarr/
+data/google-cloud-sdk/
+hyperiap/callbacks/wandb_table.py
+*.pkl
+test_class.tif
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -145,8 +163,10 @@ venv.bak/
 
 # seed project
 lightning_logs/
+artifacts/
 MNIST
 .DS_Store
 hyperiap/callbacks/wandb_table.py
 =2.4.2,
 data/input_batch.pickle
+data/predict_torch_only2.py
