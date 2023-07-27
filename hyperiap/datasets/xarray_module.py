@@ -26,8 +26,6 @@ PROCESSED_PROJECT = "science-sharing"
 PROCESSED_TRAIN_PATH = "data/clean_batched_torch.zarr"
 PROCESSED_TESTDATA_PATH = "data/test_torch_batched.zarr"
 XDIM, YDIM, WLDIM, BATCHDIM = "x_batch", "y_batch", "wl", "input_batch"
-
-CHUNKS = {XDIM: -1, YDIM: -1, WLDIM: -1, BATCHDIM: 10000}
 TESTDATA = 0
 
 
@@ -50,7 +48,7 @@ class XarrayDataModule(BaseDataModule):
 
         # load data
         if self.testdata == 0:
-            self.chunks = CHUNKS
+            self.chunks = {XDIM: -1, YDIM: -1, WLDIM: -1, BATCHDIM: 10000}
             try:
                 self.batch_gen_train = xr.open_dataset(
                     PROCESSED_TRAIN_PATH, chunks=self.chunks
@@ -86,12 +84,11 @@ class XarrayDataModule(BaseDataModule):
         dataset_size = (
             self.batch_gen_train.dims[BATCHDIM] // self.chunks[BATCHDIM]
         ) - 1
-
         traindata = XarrayDataset(
             self.batch_gen_train,
             BATCHDIM,
             dataset_size,
-            CHUNKS[BATCHDIM],
+            self.chunks[BATCHDIM],
             transform=None,
         )
         # self.data_test = XarrayDataset(self.batch_gen_test)

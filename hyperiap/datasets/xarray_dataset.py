@@ -43,6 +43,7 @@ class XarrayDataset(Dataset):
         x_batch = rearrange(x_batch, "wl x y b -> b (x y) wl")
         y_batch = torch.from_numpy(y_batch.data).type(torch.int64)
 
+        print(batch)
         if self.transform:
             x_batch = self.transform(x_batch)
 
