@@ -2,7 +2,7 @@ from argparse import Namespace
 from torch.utils.data import random_split
 from hyperiap.datasets.point_dataset import PointDataset
 from hyperiap.datasets.base_module import BaseDataModule
-from hyperiap.datasets.transforms import UnitVectorNorm, Normalize
+from hyperiap.datasets.transforms import Normalize01, NoNorm, NormalizeZ, VectorNorm
 
 from typing import Optional
 
@@ -18,13 +18,17 @@ N_BAND = 202
 # N_BAND = 267
 N_DIM = 9
 
-PROCESSED_TEST_DATA = "data/fran_testsample.zarr"
-PROCESSED_TRAIN_DATA = "data/fran_trainsample.zarr"
-PROCESSED_VALID_DATA = "data/fran_valsample.zarr"
+PROCESSED_TEST_DATA = "data/fran_test_sample2.zarr"
+PROCESSED_TRAIN_DATA = "data/fran_train_sample2.zarr"
+PROCESSED_VALID_DATA = "data/fran_val_sample2.zarr"
+# PROCESSED_TEST_DATA = "data/fran_testsample.zarr"
+# PROCESSED_TRAIN_DATA = "data/fran_trainsample.zarr"
+# PROCESSED_VALID_DATA = "data/fran_valsample.zarr"
 PROCESSED_TESTDATA_DATA = "data/test_fran_pixsample.zarr"
 CLASS_NAMES = "data/name_mapping.json"
 WLDIM, ZDIM, BATCHDIM = "wl", "z", "index"
 CHUNKS = {ZDIM: -1, WLDIM: -1, BATCHDIM: 32}
+NORM = "NoNorm"
 TESTDATA = 0
 
 
@@ -38,7 +42,7 @@ class PointDataModule(BaseDataModule):
         self.num_classes = N_CLASS
         self.num_bands = N_BAND
         self.num_dim = N_DIM
-
+        self.norm = NORM
         self.data_train = None
         self.data_test = None
         self.data_val = None
@@ -93,6 +97,18 @@ class PointDataModule(BaseDataModule):
         # store wl for later use
         self.wl = self.batch_gen_train.sel(wl=slice(0, 2.1)).wl.values
 
+        # set transform
+        if self.norm == "NoNorm":
+            self.transform = NoNorm()
+        elif self.norm == "Normalize01":
+            self.transform = Normalize01()
+        elif self.norm == "NormalizeZ":
+            self.transform = NormalizeZ()
+        elif self.norm == "VectorNorm":
+            self.transform = VectorNorm()
+        else:
+            raise ValueError("Invalid normalization")
+
     def prepare_data(self, *args, **kwargs) -> None:
         """download data here"""
 
@@ -107,13 +123,13 @@ class PointDataModule(BaseDataModule):
         test_dataset_size = self.batch_gen_test.dims[BATCHDIM]
 
         self.data_train = PointDataset(
-            self.batch_gen_train, BATCHDIM, train_dataset_size, transform=None
+            self.batch_gen_train, BATCHDIM, train_dataset_size, transform=self.transform
         )
         self.data_val = PointDataset(
-            self.batch_gen_valid, BATCHDIM, valid_dataset_size, transform=None
+            self.batch_gen_valid, BATCHDIM, valid_dataset_size, transform=self.transform
         )
         self.data_test = PointDataset(
-            self.batch_gen_test, BATCHDIM, test_dataset_size, transform=None
+            self.batch_gen_test, BATCHDIM, test_dataset_size, transform=self.transform
         )
 
     @staticmethod
@@ -124,6 +140,12 @@ class PointDataModule(BaseDataModule):
             type=int,
             default=BATCH_SIZE,
             help=f"Number of examples to operate on per forward step. Default is {BATCH_SIZE}.",
+        )
+        parser.add_argument(
+            "--norm",
+            type=str,
+            default=NORM,
+            help=f"Normalization to apply to data. Default is {NORM}.",
         )
         parser.add_argument(
             "--testdata",

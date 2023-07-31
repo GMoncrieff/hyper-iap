@@ -55,6 +55,9 @@ data/fran_trainsample.zarr/
 data/prediction_gpu.zarr/
 data/prediction_small.zarr/
 data/fran_validsample.zarr/
+data/fran_val_sample2.zarr/
+data/fran_train_sample2.zarr/
+data/fran_test_sample2.zarr/
 data/clean_batched_torch.zarr/
 hyperiap/callbacks/wandb_table.py
 data/cnn_*
@@ -74,10 +77,11 @@ data/fran_validsample.zarr/
 data/fran_valsample.zarr/
 data/clean_batched_torch.zarr/
 data/google-cloud-sdk/
+data/*.tif
 hyperiap/callbacks/wandb_table.py
 *.pkl
 test_class.tif
-
+runs/
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.

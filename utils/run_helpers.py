@@ -179,6 +179,13 @@ def setup_parser(
         default=0,
         help="do we run on test data to run tests",
     )
+    # which norm to use
+    setup_group.add_argument(
+        "--norm",
+        type=str,
+        default="NoNorm",
+        help="How to normalize data",
+    )
     # wandb_logger
     setup_group.add_argument(
         "--wandb",

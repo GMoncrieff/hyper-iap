@@ -2,7 +2,7 @@ from argparse import Namespace
 from torch.utils.data import random_split
 from hyperiap.datasets.xarray_dataset import XarrayDataset
 from hyperiap.datasets.base_module import BaseDataModule
-from hyperiap.datasets.transforms import UnitVectorNorm, Normalize
+from hyperiap.datasets.transforms import Normalize01, NoNorm, NormalizeZ, VectorNorm
 
 from typing import Optional
 
@@ -26,6 +26,7 @@ PROCESSED_PROJECT = "science-sharing"
 PROCESSED_TRAIN_PATH = "data/clean_batched_torch.zarr"
 PROCESSED_TESTDATA_PATH = "data/test_torch_batched.zarr"
 XDIM, YDIM, WLDIM, BATCHDIM = "x_batch", "y_batch", "wl", "input_batch"
+NORM = "NoNorm"
 TESTDATA = 0
 
 
@@ -39,6 +40,7 @@ class XarrayDataModule(BaseDataModule):
         self.num_classes = N_CLASS
         self.num_bands = N_BAND
         self.num_dim = N_DIM
+        self.norm = self.args.get("norm", NORM)
         self.class_names = [""] * N_CLASS
         self.batch_size = self.args.get("batch_size", BATCH_SIZE)
 
@@ -72,6 +74,18 @@ class XarrayDataModule(BaseDataModule):
         # store wl for later use
         self.wl = self.batch_gen_train.sel(wl=slice(0, 2.0)).wl.values
 
+        # set transform
+        if self.norm == "NoNorm":
+            self.transform = NoNorm()
+        elif self.norm == "Normalize01":
+            self.transform = Normalize01()
+        elif self.norm == "NormalizeZ":
+            self.transform = NormalizeZ()
+        elif self.norm == "VectorNorm":
+            self.transform = VectorNorm()
+        else:
+            raise ValueError("Invalid normalization")
+
     def prepare_data(self, *args, **kwargs) -> None:
         """download data here"""
 
@@ -89,7 +103,7 @@ class XarrayDataModule(BaseDataModule):
             BATCHDIM,
             dataset_size,
             self.chunks[BATCHDIM],
-            transform=None,
+            transform=self.transform,
         )
         # self.data_test = XarrayDataset(self.batch_gen_test)
 
@@ -113,6 +127,12 @@ class XarrayDataModule(BaseDataModule):
             type=int,
             default=BATCH_SIZE,
             help=f"Number of examples to operate on per forward step. Default is {BATCH_SIZE}.",
+        )
+        parser.add_argument(
+            "--norm",
+            type=str,
+            default=NORM,
+            help=f"Normalization to apply to data. Default is {NORM}.",
         )
         parser.add_argument(
             "--testdata",

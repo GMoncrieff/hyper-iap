@@ -2,7 +2,6 @@ from argparse import Namespace
 from torch.utils.data import random_split
 from hyperiap.datasets.s2_dataset import S2Dataset
 from hyperiap.datasets.base_module import BaseDataModule
-from hyperiap.datasets.transforms import UnitVectorNorm, Normalize
 
 from typing import Optional
 

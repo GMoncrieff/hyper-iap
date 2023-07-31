@@ -37,13 +37,12 @@ class XarrayDataset(Dataset):
             }
         )
         batch = batch.sel(wl=slice(0, 2))
-        x_batch = batch[PREDICTOR_VAR].load() / 10000
+        x_batch = batch[PREDICTOR_VAR].load()
         y_batch = batch[LABEL_VAR].load()
         x_batch = torch.from_numpy(x_batch.data)
         x_batch = rearrange(x_batch, "wl x y b -> b (x y) wl")
         y_batch = torch.from_numpy(y_batch.data).type(torch.int64)
 
-        print(batch)
         if self.transform:
             x_batch = self.transform(x_batch)
 

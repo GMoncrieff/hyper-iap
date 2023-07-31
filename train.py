@@ -53,7 +53,7 @@ def main():
             --lr=0.001 --lr_ss=0.001 --ft_lr_noisy=0.0001 --ft_lr_clean=0.0001 \
             --max_epochs_ss=2 --max_epochs_noisy=2 --max_epochs_clean=10 --log_every_n_steps=5\
             --ft_schedule=hyperiap/litmodels/LitClassifier_vit_ft_schedule.yaml \
-            --run_noisy --run_ss --run_clean --precision=32
+            --run_noisy --run_ss --run_clean --precision=32 --norm=NormalizeZ
 
         # a run with tempcnn
         python train.py --model_class=tempcnn.TEMPCNN \
