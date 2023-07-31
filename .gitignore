@@ -56,7 +56,7 @@ data/prediction_gpu.zarr/
 data/prediction_small.zarr/
 data/fran_validsample.zarr/
 data/fran_val_sample2.zarr/
-data/fran_valsample3.zarr/
+data/fran_valsample.zarr/
 data/fran_train_sample2.zarr/
 data/fran_test_sample2.zarr/
 data/clean_batched_torch.zarr/
